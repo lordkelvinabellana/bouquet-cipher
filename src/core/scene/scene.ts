@@ -245,6 +245,9 @@ export function backdropGroups(withSlate = true, height: number = FRAME.h): Draw
 /** The ribbon (and its seal) are drawn a size up, to hold the bigger flowers. */
 export const RIBBON_SCALE = 1.25;
 
+/** The wax seal on the knot, relative to its base size. */
+export const SEAL_SCALE = 1.6;
+
 const GROWING: Camera = { zoom: 1, x: TIE[0], y: TIE[1], angle: 0 };
 
 /**
@@ -265,7 +268,8 @@ export const KNOT: Pt = knotOf(GROWING);
 export function ribbonGroups(opts: SceneOptions, cam: Camera = GROWING): DrawGroup[] {
   const m = ribbonMatrix(cam);
   const groups: DrawGroup[] = [{ key: "ribbon", m, shapes: ribbonShapes(TIE, opts.ribbonSeed ?? 7) }];
-  if (opts.seal !== undefined) groups.push({ key: "seal", m, shapes: sealShapes([TIE[0], TIE[1] + 1], opts.seal) });
+  // drawn large enough to read as a seal, not a knot
+  if (opts.seal !== undefined) groups.push({ key: "seal", m, shapes: sealShapes([TIE[0], TIE[1] + 1], opts.seal, SEAL_SCALE) });
   return groups;
 }
 

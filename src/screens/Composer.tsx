@@ -196,6 +196,30 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
         </div>
 
         <div className={styles.side}>
+          <ol className={styles.progress} aria-label="Steps">
+            {(
+              [
+                ["write", "Write"],
+                ["wrap", "Wrap"],
+                ["shared", "Send"],
+              ] as const
+            ).map(([id, label], i) => {
+              const at = phase === "saving" ? 1 : ["write", "wrap", "shared"].indexOf(phase);
+              const state = i < at ? "done" : i === at ? "current" : "next";
+              const go = id === "write" && phase === "wrap" ? () => setPhase("write") : id === "wrap" && phase === "write" && final ? () => setPhase("wrap") : null;
+              return (
+                <li key={id} data-state={state} aria-current={state === "current" ? "step" : undefined}>
+                  {go ? (
+                    <button type="button" onClick={go}>
+                      {label}
+                    </button>
+                  ) : (
+                    <span>{label}</span>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
           {/* The writing note stays mounted (just hidden) so its text survives wrapping. */}
           <section className={`${styles.note} ${shaking ? styles.shake : ""}`} onAnimationEnd={() => setShaking(false)} hidden={!writing}>
             <label htmlFor="message" className={styles.srOnly}>
@@ -241,52 +265,67 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
           </section>
 
           {phase === "wrap" || phase === "saving" ? (
-            <section className={styles.note} aria-labelledby="wrap-title">
+            <section className={`${styles.note} ${styles.wrapPanel}`} aria-labelledby="wrap-title">
               <h2 id="wrap-title" className={styles.panelTitle}>
                 Wrap it up
               </h2>
-              <fieldset className={styles.papers}>
-                <legend>Paper</legend>
-                {PAPERS.map((p, i) => (
-                  <label key={p.name} className={`${styles.swatch} ${paper === i ? styles.swatchOn : ""}`} title={p.name}>
-                    <input type="radio" name="paper" value={i} checked={paper === i} onChange={() => setPaper(i)} disabled={phase === "saving"} />
-                    <span style={{ background: `linear-gradient(135deg, ${p.tone.light}, ${p.tone.base} 55%, ${p.tone.dark})` }} aria-hidden />
-                    <em>{p.name}</em>
-                  </label>
-                ))}
+
+              <fieldset className={styles.step}>
+                <legend className={styles.stepTitle}>Choose the paper</legend>
+                <div className={styles.papers}>
+                  {PAPERS.map((p, i) => (
+                    <label key={p.name} className={`${styles.swatch} ${paper === i ? styles.swatchOn : ""}`}>
+                      <input type="radio" name="paper" value={i} checked={paper === i} onChange={() => setPaper(i)} disabled={phase === "saving"} />
+                      <span style={{ background: `linear-gradient(135deg, ${p.tone.light}, ${p.tone.base} 55%, ${p.tone.dark})` }} aria-hidden />
+                      <em>{p.name}</em>
+                    </label>
+                  ))}
+                </div>
               </fieldset>
-              <label className={styles.field}>
-                <span>For</span>
-                <input value={toName} onChange={(e) => setToName(e.target.value)} placeholder="their name (optional)" maxLength={60} autoComplete="off" />
-              </label>
-              <label className={styles.field}>
-                <span>From</span>
-                <input value={fromName} onChange={(e) => setFromName(e.target.value)} placeholder="your name (optional)" maxLength={60} autoComplete="off" />
-              </label>
+
+              <div className={styles.step}>
+                <h3 className={styles.stepTitle}>Who’s it for?</h3>
+                <p className={styles.stepText}>Both names go on the gift tag. You can leave them blank.</p>
+                <label className={styles.field}>
+                  <span>For</span>
+                  <input value={toName} onChange={(e) => setToName(e.target.value)} placeholder="their name (optional)" maxLength={60} autoComplete="off" />
+                </label>
+                <label className={styles.field}>
+                  <span>From</span>
+                  <input value={fromName} onChange={(e) => setFromName(e.target.value)} placeholder="your name (optional)" maxLength={60} autoComplete="off" />
+                </label>
+              </div>
+
               {sealPreview ? (
-                <div className={styles.signature}>
-                  <svg viewBox="-14 -14 28 28" aria-hidden>
+                <div className={`${styles.step} ${styles.sealStep}`}>
+                  <svg viewBox="-14 -14 28 28" className={styles.sealBig} aria-hidden>
                     <Paths shapes={sealPreview} />
                   </svg>
-                  <p>
-                    <b>Your seal.</b> It marks every bouquet you send {account ? "from your account" : "from this device"}, so they’ll know it’s you.
-                  </p>
+                  <div>
+                    <h3 className={styles.stepTitle}>Your wax seal</h3>
+                    <p className={styles.stepText}>
+                      Pressed onto the ribbon. It’s the same on everything you send {account ? "from your account" : "from this device"}, so they’ll know it’s from you.
+                    </p>
+                  </div>
                 </div>
               ) : null}
-              <p className={styles.keyNote}>
-                This bouquet has its own secret key: no other bouquet looks like it, and only its link or tag can read it.
-              </p>
-              <div className={styles.row}>
-                <button type="button" className={styles.ghost} onClick={() => setPhase("write")} disabled={phase === "saving"}>
-                  Keep writing
-                </button>
+
+              <div className={`${styles.step} ${styles.arrangeStep}`}>
+                <div>
+                  <h3 className={styles.stepTitle}>Arrangement</h3>
+                  <p className={styles.stepText}>Same words, new flowers and colours. Every arrangement has its own secret key, so only its link or tag can read it.</p>
+                </div>
                 <button type="button" className={styles.ghost} onClick={() => setKey(newCipherKey())} disabled={phase === "saving"}>
-                  Rearrange
-                </button>
-                <button type="button" className={styles.wrap} onClick={createLink} disabled={phase === "saving"}>
-                  {phase === "saving" ? "Tying the ribbon…" : replyTo ? "Send reply" : "Create link"}
+                  Try another
                 </button>
               </div>
+
+              <button type="button" className={`${styles.wrap} ${styles.next}`} onClick={createLink} disabled={phase === "saving"}>
+                {phase === "saving" ? "Tying the ribbon…" : replyTo ? "Send reply" : "Create link"}
+              </button>
+              <button type="button" className={styles.textButton} onClick={() => setPhase("write")} disabled={phase === "saving"}>
+                Back to writing
+              </button>
               <p className={styles.hint} role="status">
                 {error}
               </p>
