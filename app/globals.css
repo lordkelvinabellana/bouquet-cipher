@@ -11,6 +11,27 @@
   --on-cream: #3b3a36;
   --on-cream-muted: #6b6251;
   --accent: #e98e72;
+  /* strong ease-out for UI responses */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+::selection {
+  background: rgb(233 142 114 / 0.38);
+  color: inherit;
+}
+
+/* Every pressable thing answers the press (component styles can override). */
+:where(button, a[class]) {
+  transition: transform 160ms var(--ease-out);
+}
+
+:where(button:not(:disabled), a[class]):active {
+  transform: scale(0.97);
+}
+
+:where(button, a, input, textarea, [tabindex]):focus-visible {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 2px;
 }
 
 * {
@@ -30,6 +51,7 @@ body {
   font-family: var(--font-serif), Georgia, "Times New Roman", serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  caret-color: var(--accent);
 }
 
 a {

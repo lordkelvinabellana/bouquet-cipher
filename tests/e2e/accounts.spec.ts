@@ -28,7 +28,7 @@ async function signIn(browser: Browser, email: string, name: string): Promise<Pa
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/bouquets$/);
   await page.getByLabel("Your name on bouquets").fill(name);
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByLabel("Your name on bouquets")).toHaveValue(name);
   return page;
 }
@@ -72,7 +72,7 @@ test("a bouquet between two accounts: kept, answered with a card, and read in th
   await kel.getByRole("link", { name: /Sam sent you a card/ }).click();
   await kel.getByRole("button", { name: "Show it all" }).click({ timeout: 15_000 });
   await expect(kel.getByLabel("The message")).toContainText("Thank you, they're lovely!");
-  await expect(kel.getByLabel("The message")).toContainText("— Sam");
+  await expect(kel.getByLabel("The message")).toContainText("Sam");
   await kel.goto("/bouquets?tab=inbox");
   await expect(kel.getByRole("link", { name: /Sam sent you a card/ })).not.toHaveAttribute("data-unread", "");
   await kel.goto("/bouquets?tab=sent");

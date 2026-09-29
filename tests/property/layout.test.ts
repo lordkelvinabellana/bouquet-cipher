@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { buildGenome, signatureOf } from "@/core/genome/genome";
-import { FLOOR, MIN_GAP, TUCK, gatherBouquet } from "@/core/layout/v1/gather";
+import { COLLAR, FLOOR, MIN_GAP, TUCK, gatherBouquet } from "@/core/layout/v1/gather";
 import { layoutBouquet, slotFor, tierSwings } from "@/core/layout/v1/layout";
 import { readingSequence } from "@/core/reveal/sequence";
 import {
@@ -268,6 +268,16 @@ describe("gathering for the wrap", () => {
       { numRuns: 200, seed: 20260929 },
     );
     expect(narrower).toBeGreaterThan(25);
+  });
+
+  it("sits every flower and leaf above the paper's collar", () => {
+    fc.assert(
+      fc.property(typed, (t) => {
+        const { bunch } = pairs(t);
+        for (const e of bunch.elements) expect(e.hit.y).toBeLessThanOrEqual(-COLLAR + 1e-6);
+      }),
+      { numRuns: 200 },
+    );
   });
 
   it("is the same every time", () => {

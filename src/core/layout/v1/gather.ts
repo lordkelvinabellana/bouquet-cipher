@@ -7,6 +7,8 @@
  *     never past the stem before it on its side (so stems don't cross).
  *  2. Sink. Then, tallest first, each stem is pulled down through the hand along its own
  *     line (up to SINK), so heads standing alone above the rest settle into the bunch.
+ *  3. Lift. Finally any stem with a flower or leaf below the paper's collar (COLLAR) is
+ *     raised until all of it clears the paper.
  *
  * Either move stops where a flower head would press closer to another than TUCK allows
  * (heads that were already that close may stay so, but get no closer), where anything
@@ -31,8 +33,14 @@ const GATHER = 0.4;
 export const TUCK = 0.55;
 /** The furthest a stem is pulled down (bouquet units: about half a flower). */
 export const SINK = 36;
-/** Heads stay this far above the tie, and everything else this far, clear of the paper's neck. */
-export const FLOOR = { head: 70, other: 40 };
+/**
+ * The paper's collar: how far above the tie the front of the wrapping comes up (bouquet
+ * units). It's the same for every bouquet, and every flower and leaf of a wrapped
+ * bouquet sits above it, so nothing hangs over the paper.
+ */
+export const COLLAR = 118;
+/** Kept for the sink: nothing is pulled down past the collar. */
+export const FLOOR = { head: COLLAR, other: COLLAR };
 /** How finely each move is searched. */
 const STEPS = 12;
 /** Room kept between neighbouring stems on the same side (degrees), so they never cross. */
@@ -146,6 +154,17 @@ export function gatherMoves(layout: BouquetLayout): Map<number, Gather> {
         heads = [...heads.filter((h) => h.stem !== st.ordinal), ...moved];
         break;
       }
+    }
+  }
+  // 3. Lift: a stem with anything still below the collar is raised along its own line
+  //    until all of it clears the paper. (Its lower stalk stays hidden behind the wrap.)
+  for (const st of layout.stems) {
+    const g = moves.get(st.ordinal)!;
+    const m = motion(lean.get(st.ordinal)!, g);
+    const lowest = Math.max(-Infinity, ...(own.get(st.ordinal) ?? []).map((e) => apply(m, [e.hit.x, e.hit.y])[1]));
+    if (lowest > -COLLAR) {
+      const a = ((lean.get(st.ordinal)! + g.turn) * Math.PI) / 180;
+      moves.set(st.ordinal, { turn: g.turn, sink: g.sink - (lowest + COLLAR) / Math.max(0.3, Math.cos(a)) });
     }
   }
   return moves;

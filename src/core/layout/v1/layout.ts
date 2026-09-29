@@ -387,7 +387,7 @@ export function layoutBouquet(genome: Genome, salt = 0, palette = 0): BouquetLay
       const m = compose(turn, chosen.m);
       placed.push(chosen.circle);
       if (chosen.pedicel) pedicels.push(chosen.pedicel.map((q) => apply(turn, q)));
-      // a flower's own stalk (the bellflower's neck) is drawn with the stems, behind every head
+      // a flower's own stalk is drawn with the stems, behind every head
       if (art.stalk) pedicels.push(art.stalk.map((q) => apply(m, q)));
       const [hx, hy] = apply(turn, [chosen.circle.x, chosen.circle.y]);
       elements.push({

@@ -12,5 +12,8 @@ export default defineConfig([
     "next-env.d.ts",
     "playwright-report/**",
     "test-results/**",
+    // installed design skills (third-party tooling, not app code)
+    ".agents/**",
+    ".claude/**",
   ]),
 ]);

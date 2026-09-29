@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { glyphFor, glyphName } from "@/core/alphabet/v1";
 import { drawGlyph, standaloneShapes } from "@/core/art";
 import { cipherOf } from "@/core/bouquet";
+import { EMBLEMS, WAXES, type SealStyle, type Wax } from "@/core/art/seal";
 import { FRAME, cardShape, ribbonShapes, sealShapes, stemShape, stitchShapes } from "@/core/art/scenery";
 import { PALETTES, PAPER } from "@/core/art/palette";
 import { hashString } from "@/core/rng";
@@ -19,7 +20,7 @@ const VOWELS: ReadonlyArray<readonly [string, string, string]> = [
   ["a", "Anemone", "á"],
   ["o", "Rose", "ö"],
   ["i", "Iris", "í"],
-  ["u", "Bellflower", "ü"],
+  ["u", "Philippine violet", "ü"],
   ["y", "Yarrow", "ÿ"],
 ];
 const LEAF_COLUMNS = ["Teardrop", "Round", "Heart", "Slender", "Needle", "Lobed", "Fern"];
@@ -154,6 +155,24 @@ function PaletteView({ messages }: { messages: string[] }) {
   );
 }
 
+/** `?seals=1` shows every wax colour with every emblem, and initials. */
+function SealsView() {
+  const marks: SealStyle["mark"][] = [...(Object.keys(EMBLEMS) as (keyof typeof EMBLEMS)[]), { initials: "KA" }, { initials: "M" }];
+  return (
+    <main className={styles.page}>
+      {(Object.keys(WAXES) as Wax[]).map((wax) => (
+        <div key={wax} style={{ display: "flex", gap: 12, margin: "12px 0" }}>
+          {marks.map((mark, i) => (
+            <svg key={i} viewBox="-20 -20 40 40" width={88} height={88} style={{ background: "#FBEFD6", borderRadius: 12 }}>
+              <Paths shapes={sealShapes([0, 0], 12345 + i, 1.4, { wax, mark })} />
+            </svg>
+          ))}
+        </div>
+      ))}
+    </main>
+  );
+}
+
 export default async function SpecimenPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   if (process.env.NODE_ENV === "production") notFound();
   const params = await searchParams;
@@ -162,6 +181,7 @@ export default async function SpecimenPage({ searchParams }: { searchParams: Pro
     return <BouquetView messages={params.bouquet.split("|")} withReference={ref} />;
   }
   if (params.palettes) return <PaletteView messages={params.palettes.split("|")} />;
+  if (params.seals) return <SealsView />;
   if (params.focus) {
     const seeds = (params.seeds ?? "11,22,33").split(",").map(Number);
     return <FocusView chars={Array.from(params.focus)} seeds={seeds} />;

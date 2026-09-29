@@ -34,7 +34,7 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
     <Composer
       initialTo={initialTo}
       initialKey={newCipherKey()}
-      account={me ? { seal: me.seal, name: me.displayName } : null}
+      account={me ? { seal: me.seal, name: me.displayName, sealStyle: me.sealStyle } : null}
       replyTo={replyTo}
     />
   );

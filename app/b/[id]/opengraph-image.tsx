@@ -10,7 +10,7 @@ export const contentType = "image/png";
 export default async function PreviewImage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const b = await loadBouquet(id);
-  const svg = bouquetPreviewSvg({ message: b?.message ?? "", salt: b?.salt, paper: b?.paper, cipherKey: b?.cipherKey, seal: b?.seal });
+  const svg = bouquetPreviewSvg({ message: b?.message ?? "", salt: b?.salt, paper: b?.paper, cipherKey: b?.cipherKey, seal: b?.seal, sealStyle: b?.sealStyle });
   const src = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
   return new ImageResponse(
     (

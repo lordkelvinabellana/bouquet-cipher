@@ -68,9 +68,9 @@
   aspect-ratio: 600 / 900;
 }
 
-/* Wrapped: the bouquet gets the left column to itself; words and buttons move right. */
+/* Wide screens: the bouquet on the left, the words and buttons on the right, from the first letter. */
 @media (min-width: 860px) {
-  .page[data-wrapped] .workspace {
+  .workspace {
     display: grid;
     grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr);
     align-items: center;
@@ -79,15 +79,19 @@
     min-height: calc(100dvh - 90px);
   }
 
+  .card {
+    --max-h: min(80dvh, 940px);
+  }
+
   .page[data-wrapped] .card {
     --max-h: min(86dvh, 1000px);
   }
 
-  .page[data-wrapped] .side {
+  .side {
     align-items: flex-start;
   }
 
-  .page[data-wrapped] .top {
+  .top {
     max-width: 1160px;
   }
 }
@@ -153,11 +157,17 @@
   color: var(--cream);
   font-size: 15px;
   cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: transform 160ms var(--ease-out), opacity 160ms var(--ease-out);
 }
 
-.wrap:hover:not(:disabled) {
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .wrap:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+}
+
+.wrap:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .wrap:focus-visible {
@@ -414,4 +424,304 @@
 
 .keyNote {
   margin-top: 8px;
+}
+
+/* ——— guidance while the card is blank ——— */
+
+.stage {
+  position: relative;
+}
+
+.emptyCard {
+  position: absolute;
+  inset: 34% 22% auto;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+  text-align: center;
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(22px, 5vw, 30px);
+  line-height: 1.15;
+  color: rgb(59 58 54 / 0.55);
+  pointer-events: none;
+  animation: emptyIn 400ms var(--ease-out) both;
+}
+
+.emptyCard span {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 14px;
+  color: rgb(59 58 54 / 0.5);
+}
+
+@keyframes emptyIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.prompt {
+  margin: 2px 0 6px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--on-cream-muted);
+  text-wrap: pretty;
+}
+
+.starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 6px;
+}
+
+.starter {
+  border: 1px solid rgb(46 74 94 / 0.22);
+  border-radius: 999px;
+  padding: 5px 11px;
+  background: #fffaf0;
+  color: var(--on-cream);
+  font-family: var(--font-hand), cursive;
+  font-size: 17px;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 160ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .starter:hover {
+    background: var(--cream-deep);
+  }
+}
+
+.starter:active {
+  transform: scale(0.97);
+}
+
+.counterLow {
+  color: #a8472f;
+}
+
+.hintSoft {
+  color: var(--on-cream-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emptyCard {
+    animation: none;
+  }
+}
+
+/* Phones: a shorter card so the note (and Wrap it) stay in view; starters swipe sideways. */
+@media (max-width: 859px) {
+  .card {
+    --max-h: min(54dvh, 700px);
+  }
+
+  .starters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: -16px;
+    padding-inline: 16px;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .starters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .starter {
+    flex: none;
+    scroll-snap-align: start;
+  }
+}
+
+/* ——— where you are: Write, Wrap, Send ——— */
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.progress li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--on-slate-muted);
+}
+
+.progress li + li::before {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: rgb(244 234 215 / 0.35);
+}
+
+.progress li > * {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgb(244 234 215 / 0.3);
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+}
+
+.progress button {
+  cursor: pointer;
+}
+
+.progress li[data-state="current"] > * {
+  border-color: var(--cream);
+  background: var(--cream);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.progress li[data-state="done"] > * {
+  color: var(--on-slate);
+}
+
+.progress li[data-state="done"] > *::before {
+  content: "";
+  width: 10px;
+  height: 6px;
+  margin-top: -3px;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .progress button:hover {
+    border-color: var(--on-slate);
+  }
+}
+
+/* ——— the wrap panel, as sections in order ——— */
+
+.wrapPanel {
+  padding: 16px 18px 12px;
+}
+
+.step {
+  margin: 0;
+  padding: 12px 0 14px;
+  border: 0;
+  border-top: 1px dashed rgb(165 123 82 / 0.45);
+  min-width: 0;
+}
+
+.stepTitle {
+  float: none;
+  width: auto;
+  margin: 0 0 4px;
+  padding: 0;
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--on-cream);
+}
+
+.stepText {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--on-cream-muted);
+  text-wrap: pretty;
+}
+
+.wrapPanel .papers {
+  gap: 14px;
+  margin: 8px 0 0;
+}
+
+.wrapPanel .swatch span {
+  width: 44px;
+  height: 44px;
+}
+
+.wrapPanel .swatch em {
+  font-size: 12px;
+}
+
+.wrapPanel .swatchOn em {
+  color: var(--on-cream);
+  font-weight: 600;
+}
+
+.sealStep {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sealBig {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  overflow: visible;
+  filter: drop-shadow(0 3px 4px rgb(90 30 20 / 0.25));
+}
+
+.sealStep .stepText {
+  margin: 0;
+}
+
+.arrangeStep {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.arrangeStep .stepText {
+  margin: 0;
+}
+
+.arrangeStep .ghost {
+  flex: none;
+  white-space: nowrap;
+}
+
+.next {
+  width: 100%;
+  margin-top: 4px;
+  padding: 13px 20px;
+  font-size: 16px;
+}
+
+.wrapPanel .textButton {
+  display: block;
+  margin: 8px auto 0;
+}
+
+.wrapPanel .step:first-of-type {
+  border-top: 0;
+  padding-top: 2px;
+}
+
+.wrapPanel .step .field:last-child {
+  border-bottom: 0;
+}
+
+.inlineLink {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  text-underline-offset: 3px;
 }

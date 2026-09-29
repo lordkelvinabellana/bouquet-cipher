@@ -3,8 +3,8 @@ import { currentUser } from "@/lib/supabase/server";
 import { getStore, type Addressing } from "@/server/store";
 import { validateNewBouquet } from "@/server/validate";
 
-/** Bouquets one address may create per 10 minutes. */
-const RATE_LIMIT = 30;
+/** Bouquets one address may create per 10 minutes (development is roomier, for test runs). */
+const RATE_LIMIT = process.env.NODE_ENV === "production" ? 30 : 1000;
 const MAX_BODY = 8 * 1024;
 
 async function hashIp(ip: string): Promise<string> {
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     const to: Addressing = { senderId: user?.id ?? null, recipientId: null };
     if (user) {
       const me = await store.profile(user.id);
-      if (me) value = { ...value, seal: me.seal, fromName: value.fromName ?? me.displayName };
+      if (me) value = { ...value, seal: me.seal, sealStyle: me.sealStyle, fromName: value.fromName ?? me.displayName };
     }
     // A reply goes straight to the original sender's inbox, if they have an account.
     if (value.replyTo) {

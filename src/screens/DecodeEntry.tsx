@@ -145,6 +145,15 @@ export function DecodeEntry() {
             <input
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
+              onPaste={(e) => {
+                // a pasted link or code opens right away
+                const text = e.clipboardData.getData("text");
+                if (parseCode(text)) {
+                  e.preventDefault();
+                  setTyped(text.trim());
+                  open(text, "typed");
+                }
+              }}
               placeholder="K7M2Q-9XWPT"
               aria-label="Bouquet code or link"
               autoCapitalize="characters"

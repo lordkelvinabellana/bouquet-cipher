@@ -6,6 +6,7 @@
  * The front sheets go in front of the stems but *behind* the flowers and leaves, so the
  * wrap never hides a letter of the message.
  */
+import { COLLAR } from "../layout/v1/gather";
 import type { BouquetLayout } from "../layout/v1/layout";
 import { makeRng } from "../rng";
 import { shade, type Tone } from "./color";
@@ -101,22 +102,23 @@ export function wrapParts(layout: BouquetLayout, paper: number, zoom: number, se
     ),
   ];
 
-  // Two front sheets folded across the stems, up to where the heads begin, so the
-  // flowers sit in the cone's mouth; the right one overlaps the left.
+  // Two front sheets folded across the stems, up to the collar: a fixed height every
+  // bouquet's flowers sit above (see gather.ts), so the heads rest in the cone's mouth.
+  // The right sheet overlaps the left.
   const leftPts: Pt[] = [
     [-neck * 1.45, D + 2 / zoom],
     [-neck * 1.05, 0],
-    [-0.55 * L, -j(0.4) * H],
-    [0.12 * R, -j(0.24) * H],
-    [neck * 0.55, -0.04 * H],
+    [-0.55 * L, -j(1.02) * COLLAR],
+    [0.12 * R, -j(0.72) * COLLAR],
+    [neck * 0.55, -0.12 * COLLAR],
     [neck * 0.95, D + 2 / zoom],
   ];
   const rightPts: Pt[] = [
     [neck * 1.45, D + 2 / zoom],
     [neck * 1.05, 0],
-    [0.58 * R, -j(0.43) * H],
-    [-0.14 * L, -j(0.2) * H],
-    [-neck * 0.55, -0.04 * H],
+    [0.58 * R, -j(1.05) * COLLAR],
+    [-0.14 * L, -j(0.64) * COLLAR],
+    [-neck * 0.55, -0.12 * COLLAR],
     [-neck * 0.95, D + 2 / zoom],
   ];
   const frontCorners = [0, 2, 3, 5];

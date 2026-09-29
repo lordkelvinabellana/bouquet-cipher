@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { sealShapes } from "@/core/art/scenery";
+import { parseSealStyle } from "@/core/art/seal";
 import { graphemes } from "@/core/text/canon";
 import { Paths } from "@/render/svg/Paths";
 import { AccountLink } from "@/components/AccountLink";
@@ -21,16 +22,17 @@ export interface CardViewProps {
   code: string;
   message: string;
   seal: number;
+  sealStyle: string | null;
   toName: string | null;
   fromName: string | null;
   viewer: Viewer;
   replyable: boolean;
 }
 
-export function CardView({ code, message, seal, toName, fromName, viewer, replyable }: CardViewProps) {
+export function CardView({ code, message, seal, sealStyle, toName, fromName, viewer, replyable }: CardViewProps) {
   const reduced = useReducedMotion() ?? false;
   const letters = useMemo(() => graphemes(message), [message]);
-  const shapes = useMemo(() => sealShapes([0, 0], seal), [seal]);
+  const shapes = useMemo(() => sealShapes([0, 0], seal, 1, parseSealStyle(sealStyle)), [seal, sealStyle]);
   const [phase, setPhase] = useState<Phase>("envelope");
   const [shown, setShown] = useState(0);
   useSeen(code, viewer);
@@ -93,7 +95,7 @@ export function CardView({ code, message, seal, toName, fromName, viewer, replya
                 <Inked text={written} />
                 {phase === "reading" ? <span className={styles.caret} aria-hidden /> : null}
               </p>
-              {phase === "read" && fromName ? <p className={styles.signed}>— {fromName}</p> : null}
+              {phase === "read" && fromName ? <p className={styles.signed}>{fromName}</p> : null}
             </article>
           )}
         </div>

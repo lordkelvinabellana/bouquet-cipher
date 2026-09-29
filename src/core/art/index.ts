@@ -1,6 +1,6 @@
 import type { BloomSpecies, Glyph } from "../alphabet/v1";
 import { makeRng, type Rng } from "../rng";
-import { anemone, bellflower, heartBloom, iris, rose, tulip, yarrow } from "./blooms";
+import { anemone, violet, heartBloom, iris, rose, tulip, yarrow } from "./blooms";
 import { leaf } from "./leaves";
 import { berries, dewdrops, mark, mysterySeed, pod } from "./marks";
 import { strokeShape } from "./paint";
@@ -12,7 +12,7 @@ const BLOOMS: Readonly<Record<BloomSpecies, (ctx: ArtCtx) => Art>> = {
   anemone,
   rose,
   iris,
-  bellflower,
+  violet,
   yarrow,
 };
 
