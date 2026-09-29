@@ -205,7 +205,7 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, toNa
                     <Inked text={written} />
                     {phase === "reading" ? <span className={styles.caret} aria-hidden /> : null}
                   </p>
-                  {phase === "read" && fromName ? <p className={styles.signed}>— {fromName}</p> : null}
+                  {phase === "read" && fromName ? <p className={styles.signed}>{fromName}</p> : null}
                 </article>
               )}
             </div>

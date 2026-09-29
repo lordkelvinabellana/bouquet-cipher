@@ -96,7 +96,7 @@ test("a bouquet can be written, wrapped, sent and read back elsewhere", async ({
   await unwrapAndRead(r);
   await expect(r.getByText(`The flowers say: ${MESSAGE}`)).toBeAttached();
   await expect(r.getByLabel("The message")).toContainText(MESSAGE);
-  await expect(r.getByLabel("The message")).toContainText("— Kel");
+  await expect(r.getByLabel("The message")).toContainText("Kel");
   await expect(r.getByRole("link", { name: "Send one back" })).toHaveAttribute("href", "/create?to=Kel");
   await recipient.close();
 });
@@ -143,7 +143,8 @@ test("the composer refuses keystrokes past the limit, and forgives after", async
   const hint = page.locator("#message-hint");
   await expect(hint).toContainText("Your bouquet is full");
   await box.press("Backspace");
-  await expect(hint).toHaveText("");
+  // the refusal clears; a gentle count of what's left takes its place
+  await expect(hint).toHaveText("1 left. Short and sweet lands best.");
 });
 
 test("backspace wilts elements away", async ({ page }) => {

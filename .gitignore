@@ -40,3 +40,10 @@ npm-debug.log*
 
 # Supabase access token for setup from this machine (never commit)
 .supabase-token
+
+# design skills installed for Claude Code (reinstall with the commands in README)
+/.agents/
+/.claude/skills/
+/.claude/agents/
+/skills-lock.json
+/.codex/

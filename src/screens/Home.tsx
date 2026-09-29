@@ -81,7 +81,7 @@ export function Home() {
           </li>
         </ol>
         <p className={styles.small}>
-          Curious how it works? <Link href="/alphabet">Read the floral alphabet</Link>.
+          Free, and no account needed. Curious how it works? <Link href="/alphabet">Read the floral alphabet</Link>.
         </p>
       </section>
 

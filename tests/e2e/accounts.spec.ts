@@ -72,7 +72,7 @@ test("a bouquet between two accounts: kept, answered with a card, and read in th
   await kel.getByRole("link", { name: /Sam sent you a card/ }).click();
   await kel.getByRole("button", { name: "Show it all" }).click({ timeout: 15_000 });
   await expect(kel.getByLabel("The message")).toContainText("Thank you, they're lovely!");
-  await expect(kel.getByLabel("The message")).toContainText("— Sam");
+  await expect(kel.getByLabel("The message")).toContainText("Sam");
   await kel.goto("/bouquets?tab=inbox");
   await expect(kel.getByRole("link", { name: /Sam sent you a card/ })).not.toHaveAttribute("data-unread", "");
   await kel.goto("/bouquets?tab=sent");

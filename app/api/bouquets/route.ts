@@ -3,8 +3,8 @@ import { currentUser } from "@/lib/supabase/server";
 import { getStore, type Addressing } from "@/server/store";
 import { validateNewBouquet } from "@/server/validate";
 
-/** Bouquets one address may create per 10 minutes. */
-const RATE_LIMIT = 30;
+/** Bouquets one address may create per 10 minutes (development is roomier, for test runs). */
+const RATE_LIMIT = process.env.NODE_ENV === "production" ? 30 : 1000;
 const MAX_BODY = 8 * 1024;
 
 async function hashIp(ip: string): Promise<string> {

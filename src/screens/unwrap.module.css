@@ -416,7 +416,7 @@
   font-size: 15px;
   cursor: pointer;
   text-decoration: none;
-  transition: transform 0.15s ease;
+  transition: transform 160ms var(--ease-out);
 }
 
 .primary {
@@ -431,9 +431,16 @@
   color: var(--on-slate);
 }
 
-.primary:hover,
-.ghost:hover:not(:disabled) {
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .primary:hover,
+  .ghost:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+}
+
+.primary:active,
+.ghost:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .primary:focus-visible,

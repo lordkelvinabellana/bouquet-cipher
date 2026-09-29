@@ -21,6 +21,9 @@ import styles from "./composer.module.css";
 
 type Phase = "write" | "wrap" | "saving" | "shared";
 
+/** A few ways in, for when the blank card is the hard part. */
+const STARTERS = ["I'm so proud of you", "Thank you for everything", "Happy birthday! Love you", "Thinking of you today"];
+
 /** Keys already sent with a bouquet in this tab, so going back to the composer never reuses one. */
 const spentKeys = new Set<string>();
 
@@ -85,6 +88,16 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
   }, [refusal]);
 
   const full = count >= MAX_GRAPHEMES;
+  const left = MAX_GRAPHEMES - count;
+  const startWith = (text: string) => {
+    reset(text);
+    setTimeout(() => {
+      const box = ref.current;
+      if (!box) return;
+      box.focus();
+      box.setSelectionRange(box.value.length, box.value.length);
+    }, 0);
+  };
   const hint = refusal
     ? refusal.kind === "total"
       ? `Your bouquet is full: ${MAX_GRAPHEMES} characters is the most a card can hold.`
@@ -174,6 +187,12 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
             style={{ aspectRatio: `${FRAME.w} / ${frameH}`, ["--ratio" as string]: FRAME.w / frameH }}
             label={final ? "Your bouquet so far" : "An empty card, waiting for your message"}
           />
+          {writing && count === 0 ? (
+            <p className={styles.emptyCard} aria-hidden>
+              Your bouquet grows here.
+              <span>Every letter becomes a flower or a leaf.</span>
+            </p>
+          ) : null}
         </div>
 
         <div className={styles.side}>
@@ -182,6 +201,11 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
             <label htmlFor="message" className={styles.srOnly}>
               Your message
             </label>
+            {count === 0 ? (
+              <p className={styles.prompt}>
+                What do you really want them to know? You have {MAX_GRAPHEMES} characters, so make each one count.
+              </p>
+            ) : null}
             <textarea
               id="message"
               ref={ref}
@@ -194,16 +218,25 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
               aria-describedby="message-count message-hint"
               {...bind}
             />
+            {count === 0 ? (
+              <div className={styles.starters} role="group" aria-label="Start with one of these">
+                {STARTERS.map((text) => (
+                  <button key={text} type="button" className={styles.starter} onClick={() => startWith(text)}>
+                    {text}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <div className={styles.foot}>
-              <span id="message-count" className={`${styles.counter} ${full ? styles.counterFull : ""}`}>
+              <span id="message-count" className={`${styles.counter} ${full ? styles.counterFull : left <= 10 ? styles.counterLow : ""}`}>
                 {count} / {MAX_GRAPHEMES}
               </span>
               <button type="button" className={styles.wrap} disabled={!final} onClick={() => setPhase("wrap")}>
                 Wrap it
               </button>
             </div>
-            <p id="message-hint" className={styles.hint} role="status">
-              {hint}
+            <p id="message-hint" className={`${styles.hint} ${hint ? "" : styles.hintSoft}`} role="status">
+              {hint || (left > 0 && left <= 10 ? `${left} left. Short and sweet lands best.` : "")}
             </p>
           </section>
 
