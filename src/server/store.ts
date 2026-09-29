@@ -31,6 +31,8 @@ export interface StoredBouquet {
   replyTo: string | null;
   /** When its recipient first opened it from their inbox. */
   readAt: string | null;
+  /** The sender's seal style when it was sent (see core/art/seal.ts). */
+  sealStyle: string | null;
   createdAt: string;
 }
 
@@ -45,6 +47,8 @@ export interface Profile {
   displayName: string | null;
   /** The account's signature: the wax seal on everything it sends. */
   seal: number;
+  /** Its chosen wax colour and emblem, if any. */
+  sealStyle: string | null;
 }
 
 export interface BouquetStore {
@@ -55,6 +59,7 @@ export interface BouquetStore {
 
   profile(userId: string): Promise<Profile | null>;
   setDisplayName(userId: string, name: string | null): Promise<void>;
+  setSealStyle(userId: string, style: string | null): Promise<void>;
   /** What this account sent, newest first. */
   sent(userId: string): Promise<StoredBouquet[]>;
   /** What was sent to this account's inbox (replies, for now), newest first. */
@@ -85,6 +90,7 @@ interface Row {
   recipient_id: string | null;
   reply_to: string | null;
   read_at: string | null;
+  seal_style: string | null;
   created_at: string;
 }
 
@@ -103,6 +109,7 @@ const fromRow = (r: Row): StoredBouquet => ({
   recipientId: r.recipient_id ?? null,
   replyTo: r.reply_to ?? null,
   readAt: r.read_at ?? null,
+  sealStyle: r.seal_style ?? null,
   createdAt: r.created_at,
 });
 
@@ -129,6 +136,7 @@ class SupabaseStore implements BouquetStore {
           to_name: b.toName,
           from_name: b.fromName,
           reply_to: b.replyTo,
+          seal_style: b.sealStyle ?? null,
           sender_id: to.senderId,
           recipient_id: to.recipientId,
         })
@@ -154,9 +162,14 @@ class SupabaseStore implements BouquetStore {
   }
 
   async profile(userId: string): Promise<Profile | null> {
-    const { data, error } = await this.db.from("profiles").select("id, display_name, seal").eq("id", userId).maybeSingle();
+    const { data, error } = await this.db.from("profiles").select("id, display_name, seal, seal_style").eq("id", userId).maybeSingle();
     if (error) this.fail("load the profile", error);
-    return data ? { id: data.id, displayName: data.display_name, seal: Number(data.seal) } : null;
+    return data ? { id: data.id, displayName: data.display_name, seal: Number(data.seal), sealStyle: data.seal_style ?? null } : null;
+  }
+
+  async setSealStyle(userId: string, style: string | null): Promise<void> {
+    const { error } = await this.db.from("profiles").update({ seal_style: style }).eq("id", userId);
+    if (error) this.fail("save the seal", error);
   }
 
   async setDisplayName(userId: string, name: string | null): Promise<void> {
@@ -242,7 +255,7 @@ class DevFileStore implements BouquetStore {
       const all = await this.read();
       let id = newBouquetId();
       while (all[id]) id = newBouquetId();
-      const row: StoredBouquet = { id, ...b, ...to, readAt: null, alphabetV: 2, createdAt: new Date().toISOString() };
+      const row: StoredBouquet = { id, ...b, ...to, sealStyle: b.sealStyle ?? null, readAt: null, alphabetV: 2, createdAt: new Date().toISOString() };
       all[id] = row;
       await fs.mkdir(path.dirname(this.file), { recursive: true });
       // write-then-rename, so a reader never sees a half-written file
@@ -268,6 +281,7 @@ class DevFileStore implements BouquetStore {
       recipientId: row.recipientId ?? null,
       replyTo: row.replyTo ?? null,
       readAt: row.readAt ?? null,
+      sealStyle: row.sealStyle ?? null,
     };
   }
 
@@ -283,6 +297,7 @@ class DevFileStore implements BouquetStore {
     return null;
   }
   async setDisplayName() {}
+  async setSealStyle() {}
   async sent() {
     return [];
   }

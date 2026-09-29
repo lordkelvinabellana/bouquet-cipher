@@ -299,6 +299,8 @@ export interface LiveBouquetProps {
   layout: BouquetLayout;
   /** Show the wax seal with this signature. */
   seal?: number;
+  /** The seal's wax colour and emblem ("gold/heart"), if the sender chose one. */
+  sealStyle?: string | null;
   ribbonSeed?: number;
   /** Animate elements as they appear (off for a bouquet that should just be there). */
   grow?: boolean;
@@ -322,6 +324,7 @@ export interface LiveBouquetProps {
 export function LiveBouquet({
   layout: open,
   seal,
+  sealStyle = null,
   ribbonSeed = 7,
   grow = true,
   glow,
@@ -363,7 +366,7 @@ export function LiveBouquet({
   const glowing = glow ? visible.find((e) => e.key === glow) : undefined;
 
   const backdrop = useMemo(() => backdropGroups(false), []);
-  const front = useMemo(() => ribbonGroups({ seal, ribbonSeed }), [seal, ribbonSeed]);
+  const front = useMemo(() => ribbonGroups({ seal, ribbonSeed, sealStyle }), [seal, ribbonSeed, sealStyle]);
   const grainId = useId().replace(/:/g, "");
   const paper = wrap?.paper ?? null;
   const sheets = useMemo(() => (paper === null ? null : wrapGroups(layout, paper, zoom, ribbonSeed + 101)), [layout, paper, zoom, ribbonSeed]);

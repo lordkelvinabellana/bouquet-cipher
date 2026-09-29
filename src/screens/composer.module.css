@@ -716,3 +716,12 @@
 .wrapPanel .step .field:last-child {
   border-bottom: 0;
 }
+
+.inlineLink {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  text-underline-offset: 3px;
+}

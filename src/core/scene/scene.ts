@@ -10,6 +10,7 @@ import { CARD, cardShape, FRAME, ribbonShapes, sealShapes, stitchShapes } from "
 import { paintBlade, strokeShape } from "../art/paint";
 import { SHARE_FRAME, tagMatrix, tagParts, tagStringShape, type TagOptions } from "../art/tag";
 import type { Label, Shape } from "../art/types";
+import { parseSealStyle } from "../art/seal";
 import { wrapParts } from "../art/wrap";
 import { gatherBouquet } from "../layout/v1/gather";
 import type { BouquetLayout, PlacedElement, PlacedStem } from "../layout/v1/layout";
@@ -227,6 +228,8 @@ export interface SceneOptions {
   ribbonSeed?: number;
   /** Signature for the wax seal; omit to leave the seal off (e.g. while composing). */
   seal?: number;
+  /** The sender's chosen wax colour and emblem ("gold/heart"), if any. */
+  sealStyle?: string | null;
   /** Wrap the bouquet in this paper (see art/wrap.ts); omit for an unwrapped bouquet. */
   paper?: number | null;
   /** Add the gift tag below the card: the picture becomes the taller share frame. */
@@ -269,7 +272,7 @@ export function ribbonGroups(opts: SceneOptions, cam: Camera = GROWING): DrawGro
   const m = ribbonMatrix(cam);
   const groups: DrawGroup[] = [{ key: "ribbon", m, shapes: ribbonShapes(TIE, opts.ribbonSeed ?? 7) }];
   // drawn large enough to read as a seal, not a knot
-  if (opts.seal !== undefined) groups.push({ key: "seal", m, shapes: sealShapes([TIE[0], TIE[1] + 1], opts.seal, SEAL_SCALE) });
+  if (opts.seal !== undefined) groups.push({ key: "seal", m, shapes: sealShapes([TIE[0], TIE[1] + 1], opts.seal, SEAL_SCALE, parseSealStyle(opts.sealStyle)) });
   return groups;
 }
 

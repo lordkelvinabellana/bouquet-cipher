@@ -33,7 +33,7 @@ export default async function BouquetPage({ params }: Props) {
   const replyable = b.senderId !== null;
   if (b.kind === "card") {
     return (
-      <CardView code={b.id} message={b.message} seal={b.seal ?? 0} toName={b.toName} fromName={b.fromName} viewer={viewer} replyable={replyable} />
+      <CardView code={b.id} message={b.message} seal={b.seal ?? 0} sealStyle={b.sealStyle} toName={b.toName} fromName={b.fromName} viewer={viewer} replyable={replyable} />
     );
   }
   return (
@@ -44,6 +44,7 @@ export default async function BouquetPage({ params }: Props) {
       paper={b.paper}
       cipherKey={b.cipherKey}
       senderSeal={b.seal}
+      sealStyle={b.sealStyle}
       toName={b.toName}
       fromName={b.fromName}
       viewer={viewer}

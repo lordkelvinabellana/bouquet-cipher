@@ -5,7 +5,7 @@
  * would change what old bouquets say. New ideas go into a v2 module instead.
  */
 
-export type BloomSpecies = "tulip" | "anemone" | "rose" | "iris" | "bellflower" | "yarrow";
+export type BloomSpecies = "tulip" | "anemone" | "rose" | "iris" | "violet" | "yarrow";
 export type LeafShape = "teardrop" | "round" | "heart" | "slender" | "needle" | "lobed" | "fern";
 export type LeafTint = "sage" | "blue" | "coral";
 export type MarkKind = "bud" | "tendril" | "starburst" | "snowdrop" | "thorn" | "knuckle";
@@ -25,7 +25,7 @@ export const BLOOM_OF: Readonly<Record<string, BloomSpecies>> = {
   a: "anemone",
   o: "rose",
   i: "iris",
-  u: "bellflower",
+  u: "violet",
   y: "yarrow",
 };
 
@@ -223,7 +223,7 @@ export function glyphName(glyph: Glyph): string {
         anemone: "anemone",
         rose: "rose",
         iris: "iris",
-        bellflower: "bellflower",
+        violet: "Philippine violet",
         yarrow: "yarrow",
       };
       return `${glyph.upper ? "large " : ""}${names[glyph.species]}${glyph.accents.length ? " with dew" : ""}`;

@@ -3,7 +3,7 @@
  * by shape alone; colour is decorative.
  *
  *   E tulip (cup)   A anemone (broad fan, dark eye)   O rose (round spiral)
- *   I iris (tall)   U bellflower (hanging bell)       Y yarrow (flat cluster)
+ *   I iris (tall)   U violet (upright spike)          Y yarrow (flat cluster)
  */
 import type { Rng } from "../rng";
 import { shade, toneStep, type Tone } from "./color";
@@ -214,81 +214,60 @@ export function iris(ctx: ArtCtx): Art {
   return { shapes, hit: { x: 0, y: -0.52 * S, r: 0.42 * S }, focus: { x: 0, y: -0.55 * S }, reach: S };
 }
 
-function smoothstep(e0: number, e1: number, x: number): number {
-  const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
-  return t * t * (3 - 2 * t);
-}
-
-/** Bell outline hanging down from (0,0) along +y, with a five-pointed scalloped rim. */
-function bellPts(len: number, wTop: number, wGrow: number, flare: number): { pts: Pt[]; corners: number[] } {
-  const n = 9;
-  const right: Pt[] = [];
-  for (let k = 0; k <= n; k++) {
-    const t = k / n;
-    right.push([wTop + wGrow * Math.pow(t, 1.3) + flare * smoothstep(0.65, 1, t), len * t]);
-  }
-  const W = right[n][0];
-  // Two outer corners plus three inner points make five tips; notches sit between them.
-  const gaps = 4;
-  const rim: Pt[] = [];
-  for (let k = 1; k < gaps * 2; k++) {
-    const u = k / (gaps * 2);
-    rim.push([W - 2 * W * u, k % 2 === 1 ? len * 0.9 : len * 1.02]);
-  }
-  const left = right.map(([x, y]) => [-x, y] as Pt).reverse();
-  const pts = [...right, ...rim, ...left];
-  const corners = [n, n + rim.length + 1];
-  rim.forEach((_, i) => {
-    if ((i + 1) % 2 === 0) corners.push(n + 1 + i);
-  });
-  return { pts, corners };
-}
-
 /**
- * U: a bell nodding from a short hooked neck, hanging beside its stem rather than above
- * the bunch. Hooks toward +x (the layout mirrors it on the left). The neck is a stalk
- * (see Art.stalk), drawn with the stems.
+ * U: a Philippine violet, an upright spike of small lipped florets that pair off up a
+ * green axis and shrink to tight buds at the tip. It stands straight up from its stem,
+ * so nothing hangs or hooks. The axis is a stalk (see Art.stalk), drawn with the stems.
  */
-export function bellflower(ctx: ArtCtx): Art {
+export function violet(ctx: ArtCtx): Art {
   const { rng, tone, upper } = ctx;
   const S = bloomSize(ctx, 0.95);
   const shapes: Shape[] = [];
-  const neck: Pt[] = [
-    [0, 0],
-    [0.02 * S, -0.18 * S],
-    [0.1 * S, -0.34 * S],
-    [0.24 * S, -0.41 * S],
-    [0.36 * S, -0.36 * S],
-  ];
-  const H = neck[neck.length - 1];
-  const m = compose(translate(H[0], H[1]), rotate(-14 + rng.jitter(8)));
-  // tiny green calyx where the bell meets the neck
-  shapes.push(...paintOutline(applyAll(m, ellipsePts(0, 0.02 * S, 0.085 * S, 0.055 * S, 10)), [], GREEN, undefined, { highlight: 0 }));
-  const len = 0.62 * S;
-  const body = bellPts(len, 0.085 * S, 0.17 * S, 0.075 * S);
-  const mouth = ellipsePts(0, len * 0.9, (0.085 + 0.17 + 0.075) * S * 0.78, 0.05 * S, 14);
-  shapes.push(...paintOutline(applyAll(m, mouth), [], toneStep(tone, "dark"), undefined, { highlight: 0, rim: 0.05 }));
-  shapes.push(...paintOutline(applyAll(m, body.pts), body.corners, tone, undefined, { highlightShift: [-0.2, -0.05] }));
-  if (upper) {
-    const inner = bellPts(len * 0.84, 0.06 * S, 0.13 * S, 0.055 * S);
-    shapes.push(
-      ...paintOutline(applyAll(m, inner.pts), inner.corners, toneStep(tone, "light"), undefined, { highlight: 0.3 }),
-    );
+  const base = -0.2 * S;
+  const top = -1.02 * S;
+  const lean = rng.jitter(0.05 * S);
+  // the axis bends a touch as it climbs
+  const axisAt = (t: number): Pt => [lean * t * t, base + (top - base) * t];
+  const axis: Pt[] = [[0, 0], [0, base * 0.5], axisAt(0), axisAt(0.5), axisAt(1)];
+
+  const levels = upper ? 6 : 5;
+  const florets: Array<{ p: Pt; a: number; len: number; t: number }> = [];
+  for (let i = 0; i < levels; i++) {
+    const t = i / levels;
+    const len = 0.24 * S * (1 - 0.5 * t) * rng.range(0.9, 1.08);
+    const spread = 62 - 24 * t + rng.jitter(6);
+    // the pair is staggered, so the spike reads as alternating florets
+    for (const side of [-1, 1] as const) {
+      const at = axisAt(Math.min(1, t + (side === 1 ? 0.5 / levels : 0)));
+      florets.push({ p: at, a: side * spread, len, t });
+    }
   }
-  // a pale streak down one side of the bell
-  const streak: Pt[] = [];
-  for (let k = 0; k <= 8; k++) {
-    const t = k / 8;
-    streak.push([(0.085 + 0.17 * Math.pow(t, 1.3)) * S * 0.5, len * 0.85 * t + 0.05 * S]);
+  // tips first, so the lower (bigger) florets overlap them
+  florets.sort((x, y) => x.p[1] - y.p[1]);
+  for (const f of florets) {
+    const m = compose(translate(f.p[0], f.p[1]), rotate(f.a));
+    const w = f.len * 0.5;
+    // the floret: an upper hood and a lighter lower lip, flaring away from the axis
+    const hood = ellipsePts(0, -f.len * 0.55, w * 0.62, f.len * 0.58, 12);
+    shapes.push(...paintOutline(applyAll(m, hood), [], tone, undefined, { highlight: f.t < 0.5 ? 0.35 : 0, highlightShift: [-0.15, -0.2] }));
+    const lip = apply(m, [w * 0.25, -f.len * 0.95]);
+    shapes.push(dot(lip, w * 0.42, tone.light, 0.85));
+    // a dark calyx where it joins the axis
+    shapes.push(dot(apply(m, [0, -f.len * 0.08]), w * 0.34, tone.dark));
   }
-  shapes.push(strokeShape(applyAll(m, streak), 0.05 * S, 0.02 * S, tone.light, undefined, 0.5));
-  const f = apply(m, [0, len * 0.5]);
+  // closed buds at the very tip
+  const tip = axisAt(1);
+  const bud = 0.05 * S;
+  shapes.push(...paintDot([tip[0] - bud * 0.5, tip[1] + bud * 0.4], bud * 0.9, toneStep(tone, "dark"), false));
+  shapes.push(...paintDot([tip[0] + bud * 0.2, tip[1] - bud * 0.6], bud, toneStep(tone, "dark"), false));
+
+  const c = axisAt(0.45);
   return {
     shapes,
-    hit: { x: (f[0] + H[0] * 0.3) / 1.3, y: f[1] - 0.05 * S, r: 0.42 * S },
-    focus: { x: f[0], y: f[1] },
-    reach: S * 0.7,
-    stalk: sampleCurve(neck, 5),
+    hit: { x: c[0], y: c[1], r: 0.44 * S },
+    focus: { x: c[0], y: c[1] },
+    reach: S,
+    stalk: sampleCurve(axis, 6),
   };
 }
 

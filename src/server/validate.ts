@@ -25,6 +25,8 @@ export interface NewBouquet {
   fromName: string | null;
   /** The bouquet this answers, if it's a reply. */
   replyTo: string | null;
+  /** The sender's seal style (set by the server from their account, never the request). */
+  sealStyle?: string | null;
 }
 
 export type Validated = { ok: true; value: NewBouquet } | { ok: false; error: string };

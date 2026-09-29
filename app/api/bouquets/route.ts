@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     const to: Addressing = { senderId: user?.id ?? null, recipientId: null };
     if (user) {
       const me = await store.profile(user.id);
-      if (me) value = { ...value, seal: me.seal, fromName: value.fromName ?? me.displayName };
+      if (me) value = { ...value, seal: me.seal, sealStyle: me.sealStyle, fromName: value.fromName ?? me.displayName };
     }
     // A reply goes straight to the original sender's inbox, if they have an account.
     if (value.replyTo) {

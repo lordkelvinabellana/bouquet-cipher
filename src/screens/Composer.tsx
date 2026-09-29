@@ -6,6 +6,7 @@ import { SHARE_FRAME } from "@/core/art/tag";
 import { PAPERS } from "@/core/art/wrap";
 import { formatCode } from "@/core/code";
 import { sealShapes } from "@/core/art/scenery";
+import { parseSealStyle } from "@/core/art/seal";
 import { cipherOf, growBouquet, ribbonSeedOf, sealOf } from "@/core/bouquet";
 import { newCipherKey } from "@/core/cipher";
 import type { BouquetLayout } from "@/core/layout/v1/layout";
@@ -51,7 +52,7 @@ export interface ComposerProps {
   initialTo?: string;
   initialKey: string;
   /** Signed in: the account's seal and name (otherwise the seal is this device's). */
-  account?: { seal: number; name: string | null } | null;
+  account?: { seal: number; name: string | null; sealStyle: string | null } | null;
   /** Replying to this bouquet: it goes to its sender's inbox. */
   replyTo?: string | null;
 }
@@ -77,7 +78,8 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
   const deviceSeal = useSignatureSeal();
   const mySeal = account ? account.seal : deviceSeal;
   const seal = !writing && final ? sealOf(mySeal, final, cipher) : undefined;
-  const sealPreview = useMemo(() => (mySeal === null ? null : sealShapes([0, 0], mySeal)), [mySeal]);
+  const sealStyle = account?.sealStyle ?? null;
+  const sealPreview = useMemo(() => (mySeal === null ? null : sealShapes([0, 0], mySeal, 1, parseSealStyle(sealStyle))), [mySeal, sealStyle]);
   const ribbonSeed = ribbonSeedOf(cipher);
   const announcement = useAnnouncement(layout);
   const tag = shared ? { url: shared.url, code: shared.code, toName: toName || null, fromName: fromName || null } : null;
@@ -139,7 +141,7 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
     if (!shared || !tag) return;
     setSavingImage(true);
     try {
-      const blob = await exportPng(sceneGroups(layout, { seal, ribbonSeed, paper, tag }), { height: SHARE_FRAME.h });
+      const blob = await exportPng(sceneGroups(layout, { seal, sealStyle, ribbonSeed, paper, tag }), { height: SHARE_FRAME.h });
       if (share) await shareOrDownload(blob, "bouquet.png", `${toName ? `A bouquet for ${toName}. ` : ""}Scan the tag or open ${shared.url} to read the flowers.`);
       else await shareOrDownload(blob, "bouquet.png", undefined, false);
     } finally {
@@ -179,6 +181,7 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
           <LiveBouquet
             layout={layout}
             seal={seal}
+            sealStyle={sealStyle}
             ribbonSeed={ribbonSeed}
             wrap={writing ? null : { paper, state: "wrapping" }}
             present={!writing}
@@ -306,6 +309,15 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
                     <p className={styles.stepText}>
                       Pressed onto the ribbon. It’s the same on everything you send {account ? "from your account" : "from this device"}, so they’ll know it’s from you.
                     </p>
+                    {account ? (
+                      <Link className={styles.inlineLink} href="/bouquets#seal">
+                        Change your seal
+                      </Link>
+                    ) : (
+                      <Link className={styles.inlineLink} href={`/login?next=${encodeURIComponent("/bouquets#seal")}`}>
+                        Sign in to design your own seal
+                      </Link>
+                    )}
                   </div>
                 </div>
               ) : null}

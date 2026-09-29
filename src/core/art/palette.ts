@@ -28,7 +28,7 @@ const SPECIES_COLORS: Readonly<Record<BloomSpecies, readonly BloomColor[]>> = {
   anemone: ["orange", "blue", "pink", "lavender", "orange"],
   rose: ["pink", "orange", "yellow", "pink", "lavender"],
   iris: ["lavender", "blue", "lavender", "blue", "yellow"],
-  bellflower: ["blue", "lavender", "blue", "pink"],
+  violet: ["lavender", "lavender", "blue", "pink"],
   yarrow: ["yellow", "pink", "orange", "yellow", "lavender"],
 };
 
@@ -91,7 +91,7 @@ export interface Palette {
   leaves: Readonly<Record<LeafTint, Tone>>;
 }
 
-const SPECIES_INDEX: Readonly<Record<BloomSpecies, number>> = { tulip: 0, anemone: 1, rose: 2, iris: 3, bellflower: 4, yarrow: 5 };
+const SPECIES_INDEX: Readonly<Record<BloomSpecies, number>> = { tulip: 0, anemone: 1, rose: 2, iris: 3, violet: 4, yarrow: 5 };
 
 /** A palette from five flower colours: each species leans on three of them, so a bouquet mixes well. */
 function family(id: number, name: string, blooms: readonly Tone[], leaves: Record<LeafTint, Tone>): Palette {

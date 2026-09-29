@@ -28,7 +28,7 @@ async function signIn(browser: Browser, email: string, name: string): Promise<Pa
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/bouquets$/);
   await page.getByLabel("Your name on bouquets").fill(name);
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByLabel("Your name on bouquets")).toHaveValue(name);
   return page;
 }

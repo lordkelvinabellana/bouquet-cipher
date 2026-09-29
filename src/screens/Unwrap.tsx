@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { FRAME, sealShapes } from "@/core/art/scenery";
+import { parseSealStyle } from "@/core/art/seal";
 import { SHARE_FRAME } from "@/core/art/tag";
 import { cipherOf, growBouquet, ribbonSeedOf, sealOf } from "@/core/bouquet";
 import { readingSequence, stepPause } from "@/core/reveal/sequence";
@@ -37,6 +38,8 @@ export interface UnwrapProps {
   cipherKey: string | null;
   /** The sender's signature seal, if any. */
   senderSeal: number | null;
+  /** The sender's seal colour and emblem, if they chose one. */
+  sealStyle: string | null;
   toName: string | null;
   fromName: string | null;
   /** Who's looking, and whether its sender can be answered in their inbox. */
@@ -54,7 +57,7 @@ export function useSeen(code: string, viewer: Viewer) {
   }, [code, viewer.signedIn, viewer.own]);
 }
 
-export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, toName, fromName, viewer, replyable }: UnwrapProps) {
+export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, sealStyle, toName, fromName, viewer, replyable }: UnwrapProps) {
   const reduced = useReducedMotion() ?? false;
   const cipher = useMemo(() => cipherOf(cipherKey), [cipherKey]);
   const layout = useMemo(() => growBouquet(message, cipher, salt), [message, cipher, salt]);
@@ -62,7 +65,7 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, toNa
   const ribbonSeed = ribbonSeedOf(cipher, salt);
   const steps = useMemo(() => readingSequence(layout, cipher), [layout, cipher]);
   const camera = useMemo(() => presentedCamera(layout), [layout]);
-  const seal = useMemo(() => sealShapes([0, 0], signature), [signature]);
+  const seal = useMemo(() => sealShapes([0, 0], signature, 1, parseSealStyle(sealStyle)), [signature, sealStyle]);
 
   const [phase, setPhase] = useState<Phase>("arrive");
   useSeen(code, viewer);
@@ -112,7 +115,7 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, toNa
     setSaving(true);
     try {
       const url = `${window.location.origin}/b/${code}`;
-      const blob = await exportPng(sceneGroups(layout, { seal: signature, ribbonSeed, paper, tag: { url, code, toName, fromName } }), {
+      const blob = await exportPng(sceneGroups(layout, { seal: signature, sealStyle, ribbonSeed, paper, tag: { url, code, toName, fromName } }), {
         height: SHARE_FRAME.h,
       });
       await shareOrDownload(blob, "bouquet.png", undefined, false);
@@ -144,6 +147,7 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, toNa
           <LiveBouquet
             layout={layout}
             seal={signature}
+            sealStyle={sealStyle}
             ribbonSeed={ribbonSeed}
             grow={false}
             glow={glowKey}

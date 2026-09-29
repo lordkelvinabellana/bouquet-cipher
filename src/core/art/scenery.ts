@@ -7,6 +7,7 @@ import { shade, type Tone } from "./color";
 import { applyAll, circlePath, compose, fmt, rotate, scale, translate, type Pt } from "./geom";
 import { dot, paintBlade, paintOutline, strokeShape } from "./paint";
 import { ACCENT, PAPER } from "./palette";
+import { emblemShapes, WAXES, type SealStyle } from "./seal";
 import type { Shape } from "./types";
 
 /** The whole picture is a 600×900 frame, like the reference. */
@@ -138,8 +139,12 @@ export function ribbonShapes(tie: Pt, seed: number): Shape[] {
  * The wax seal on the knot. Its pattern comes from the whole message's hash, so it is
  * the bouquet's visible signature: change one letter and the seal changes.
  */
-/** `k` scales the whole seal (1 is its size on a card's knot). */
-export function sealShapes(c: Pt, signature: number, k = 1): Shape[] {
+/**
+ * `k` scales the whole seal (1 is its size on a card's knot). An account's `style` picks
+ * the wax colour and the emblem; without one it's the classic red seal with a rosette.
+ */
+export function sealShapes(c: Pt, signature: number, k = 1, style: SealStyle | null = null): Shape[] {
+  const wax = style ? WAXES[style.wax].tone : ACCENT.seal;
   const rng = makeRng(signature);
   const n = 22;
   const blob: Pt[] = [];
@@ -150,8 +155,13 @@ export function sealShapes(c: Pt, signature: number, k = 1): Shape[] {
     const r = 11 * k * (1 + 0.05 * Math.sin(bumps * a + bumpPhase) + rng.jitter(0.025));
     blob.push([c[0] + Math.cos(a) * r, c[1] + Math.sin(a) * r]);
   }
-  const shapes: Shape[] = paintOutline(blob, [], ACCENT.seal, undefined, { highlight: 0.25, inset: 0.9 });
-  shapes.push(dot(c, 7.6 * k, ACCENT.seal.dark, 0.55), dot(c, 6.6 * k, ACCENT.seal.base));
+  const shapes: Shape[] = paintOutline(blob, [], wax, undefined, { highlight: 0.25, inset: 0.9 });
+  shapes.push(dot(c, 7.6 * k, wax.dark, 0.55), dot(c, 6.6 * k, wax.base));
+  const emblem = style ? emblemShapes(style, c, k) : null;
+  if (emblem) {
+    shapes.push(...emblem);
+    return shapes;
+  }
   const petals = 5 + (signature % 4);
   const spin = (signature >>> 3) % 360;
   for (let i = 0; i < petals; i++) {
@@ -159,7 +169,7 @@ export function sealShapes(c: Pt, signature: number, k = 1): Shape[] {
       ...paintBlade(
         { length: 5.4, width: 1.9, a: 0.8, b: 0.7, samples: 8 },
         rng,
-        { tone: ACCENT.seal, rim: -0.25 },
+        { tone: wax, rim: -0.25 },
         compose(translate(c[0], c[1]), rotate(spin + (i * 360) / petals), scale(k)),
       ),
     );
@@ -167,8 +177,8 @@ export function sealShapes(c: Pt, signature: number, k = 1): Shape[] {
   const ring = 7 + ((signature >>> 8) % 6);
   for (let i = 0; i < ring; i++) {
     const a = (i / ring) * Math.PI * 2 + ((signature >>> 12) % 100) / 16;
-    shapes.push(dot([c[0] + Math.cos(a) * 9.1 * k, c[1] + Math.sin(a) * 9.1 * k], 0.75 * k, ACCENT.seal.light, 0.9));
+    shapes.push(dot([c[0] + Math.cos(a) * 9.1 * k, c[1] + Math.sin(a) * 9.1 * k], 0.75 * k, wax.light, 0.9));
   }
-  shapes.push(dot(c, 1.3 * k, ACCENT.seal.dark));
+  shapes.push(dot(c, 1.3 * k, wax.dark));
   return shapes;
 }

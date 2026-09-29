@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { formatCode } from "@/core/code";
 import { sealShapes } from "@/core/art/scenery";
+import { parseSealStyle, sealStyleString } from "@/core/art/seal";
+import { SealEditor } from "@/components/SealEditor";
 import { currentUser } from "@/lib/supabase/server";
 import { Paths } from "@/render/svg/Paths";
 import { getStore, type StoredBouquet } from "@/server/store";
@@ -30,6 +32,15 @@ async function saveName(form: FormData) {
   const name = cleanName(form.get("name"), "Your name");
   if (!name.ok) return;
   await getStore().setDisplayName(user.id, name.value);
+  revalidatePath("/bouquets");
+}
+
+async function saveSeal(style: string | null) {
+  "use server";
+  const user = await currentUser();
+  if (!user) return;
+  const parsed = parseSealStyle(style);
+  await getStore().setSealStyle(user.id, parsed ? sealStyleString(parsed) : null);
   revalidatePath("/bouquets");
 }
 
@@ -91,7 +102,7 @@ export default async function BouquetsPage({ searchParams }: { searchParams: Pro
 
       <section className={styles.profile} aria-label="Your profile">
         <svg viewBox="-14 -14 28 28" className={styles.seal} aria-hidden>
-          <Paths shapes={sealShapes([0, 0], me?.seal ?? 0)} />
+          <Paths shapes={sealShapes([0, 0], me?.seal ?? 0, 1, parseSealStyle(me?.sealStyle))} />
         </svg>
         <form action={saveName} className={styles.nameForm}>
           <label htmlFor="name" className={styles.nameLabel}>
@@ -113,6 +124,8 @@ export default async function BouquetsPage({ searchParams }: { searchParams: Pro
           </button>
         </form>
       </section>
+
+      <SealEditor seal={me?.seal ?? 0} initial={me?.sealStyle ?? null} save={saveSeal} />
 
       <nav className={styles.tabs} aria-label="Your bouquets">
         {TABS.map((t) => (

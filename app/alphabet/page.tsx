@@ -14,7 +14,7 @@ const BLOOMS: ReadonlyArray<readonly [string, string, string]> = [
   ["a", "Anemone", "broad petals and a dark eye"],
   ["o", "Rose", "round, like an O"],
   ["i", "Iris", "tall and upright, like an I"],
-  ["u", "Bellflower", "a hanging bell: an upside-down U"],
+  ["u", "Philippine violet", "a spike of little florets reaching up, like a U held open to the sky"],
   ["y", "Yarrow", "a flat cluster of tiny florets"],
 ];
 
