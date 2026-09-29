@@ -1,0 +1,153 @@
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+}
+
+.header h1 {
+  margin: 0 0 6px;
+  font-weight: 500;
+  font-size: 28px;
+}
+
+.header p {
+  margin: 0;
+  color: var(--on-slate-muted);
+}
+
+.section {
+  margin-top: 36px;
+}
+
+.section h2 {
+  font-weight: 500;
+  font-size: 18px;
+  margin: 0 0 12px;
+  color: var(--on-slate);
+}
+
+.bloomRows {
+  display: grid;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.rowLabel {
+  width: 110px;
+  display: flex;
+  align-items: center;
+  color: var(--on-slate-muted);
+  font-size: 14px;
+}
+
+.rowLabel b {
+  color: var(--on-slate);
+  font-size: 20px;
+  margin-right: 6px;
+}
+
+.leafGrid {
+  display: grid;
+  grid-template-columns: 110px repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.contents {
+  display: contents;
+}
+
+.colLabel {
+  font-size: 13px;
+  color: var(--on-slate-muted);
+  text-align: center;
+}
+
+.flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.tile {
+  margin: 0;
+  width: 120px;
+  background: var(--cream);
+  border-radius: 14px;
+  padding: 6px 6px 8px;
+  color: var(--on-cream);
+}
+
+.leafGrid .tile {
+  width: auto;
+}
+
+.tileSvg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 120 / 128;
+}
+
+.empty {
+  opacity: 0.4;
+}
+
+.caption {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--on-cream-muted);
+}
+
+.char {
+  font-family: var(--font-hand), cursive;
+  font-size: 20px;
+  color: var(--on-cream);
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compare {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.scene {
+  width: min(100%, 380px);
+  height: auto;
+  border-radius: 8px;
+  display: block;
+}
+
+.bouquetFigure {
+  margin: 0;
+  width: min(100%, 380px);
+  display: grid;
+  gap: 6px;
+  color: var(--on-slate-muted);
+  font-size: 13px;
+}
+
+.focusGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.focusTile .tile {
+  width: 250px;
+}

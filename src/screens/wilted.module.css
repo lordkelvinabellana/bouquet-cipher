@@ -1,0 +1,55 @@
+.wilted {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.wilted h1 {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-weight: 400;
+  font-size: 40px;
+}
+
+.wilted p {
+  margin: 0 0 8px;
+  max-width: 360px;
+  color: var(--on-slate-muted);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.button,
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 11px 20px;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.button {
+  background: var(--cream);
+  color: var(--ink);
+}
+
+.ghost {
+  border: 1px solid rgb(244 234 215 / 0.5);
+  color: var(--on-slate);
+}
+
+.button:focus-visible,
+.ghost:focus-visible {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 2px;
+}

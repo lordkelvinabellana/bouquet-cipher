@@ -1,0 +1,42 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# testing
+/coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# env
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+# local dev bouquet store (used when Supabase isn't configured)
+/.data/
+
+# supabase local state
+/supabase/.branches
+/supabase/.temp
+
+# typescript
+*.tsbuildinfo
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+
+# local-only design reference (watermarked stock image, never commit or deploy)
+/public/_dev/
+
+# Supabase access token for setup from this machine (never commit)
+.supabase-token

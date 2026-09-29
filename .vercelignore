@@ -1,0 +1,11 @@
+# never upload the local-only design reference or the dev bouquet store
+public/_dev
+.data
+test-results
+playwright-report
+
+.supabase-token
+
+# local secrets: set them in Vercel project settings instead
+.env*
+!.env.example

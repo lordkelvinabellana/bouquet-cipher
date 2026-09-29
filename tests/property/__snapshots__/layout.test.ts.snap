@@ -1,0 +1,21 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`golden bouquets > draws "Café crème" the same way 1`] = `"215c652e"`;
+
+exports[`golden bouquets > draws "Dear Sam,\\nthinking of you" the same way 1`] = `"a33102e2"`;
+
+exports[`golden bouquets > draws "Don't stop, ok?!" the same way 1`] = `"612c4c58"`;
+
+exports[`golden bouquets > draws "Happy 21st birthday!!" the same way 1`] = `"a1eff985"`;
+
+exports[`golden bouquets > draws "Happy birthday! Wishing you all the love in the world" the same way 1`] = `"53f92120"`;
+
+exports[`golden bouquets > draws "I love you" the same way 1`] = `"4e677964"`;
+
+exports[`golden bouquets > draws "The quick brown fox jumps over the lazy dog" the same way 1`] = `"5bafad97"`;
+
+exports[`golden bouquets > draws "WILL YOU GO TO PROM WITH ME?" the same way 1`] = `"bb4ec643"`;
+
+exports[`golden bouquets > draws "aeiou" the same way 1`] = `"76191ce8"`;
+
+exports[`golden bouquets > draws "hmm" the same way 1`] = `"52737260"`;

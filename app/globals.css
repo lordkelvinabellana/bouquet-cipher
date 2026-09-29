@@ -1,0 +1,41 @@
+:root {
+  --slate: #3e4f57;
+  --slate-deep: #34444c;
+  --slate-soft: #4a5c65;
+  --cream: #fbefd6;
+  --cream-deep: #f2e2c2;
+  --stitch: #a57b52;
+  --ink: #2e4a5e;
+  --on-slate: #f4ead7;
+  --on-slate-muted: #c9c3b4;
+  --on-cream: #3b3a36;
+  --on-cream-muted: #6b6251;
+  --accent: #e98e72;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--slate);
+  color: var(--on-slate);
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+}

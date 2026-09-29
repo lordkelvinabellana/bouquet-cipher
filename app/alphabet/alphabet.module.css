@@ -1,0 +1,183 @@
+.page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 14px 16px 64px;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand {
+  font-family: var(--font-hand), cursive;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--on-slate);
+  text-decoration: none;
+}
+
+.links {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cta {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 9px 18px;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.cta:focus-visible {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 2px;
+}
+
+.title {
+  margin: 36px 0 6px;
+  font-family: var(--font-hand), cursive;
+  font-weight: 400;
+  font-size: clamp(40px, 8vw, 60px);
+  line-height: 1;
+}
+
+.lede {
+  margin: 0;
+  font-size: 18px;
+  color: var(--on-slate-muted);
+}
+
+.how {
+  margin-top: 24px;
+  max-width: 680px;
+  background: rgb(251 239 214 / 0.07);
+  border: 1px solid rgb(251 239 214 / 0.15);
+  border-radius: 16px;
+  padding: 6px 20px;
+}
+
+.how ol {
+  padding-left: 20px;
+  line-height: 1.55;
+}
+
+.how li {
+  margin: 8px 0;
+}
+
+.section {
+  margin-top: 40px;
+}
+
+.section h2 {
+  margin: 0 0 4px;
+  font-weight: 500;
+  font-size: 20px;
+}
+
+.note {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--on-slate-muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.tile {
+  margin: 0;
+  background: var(--cream);
+  color: var(--on-cream);
+  border-radius: 16px;
+  padding: 6px 8px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 120 / 128;
+}
+
+.tile figcaption {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.letter {
+  font-family: var(--font-hand), cursive;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hook {
+  font-size: 12px;
+  color: var(--on-cream-muted);
+}
+
+.leafScroll {
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.leafGrid {
+  display: grid;
+  grid-template-columns: 130px repeat(7, minmax(96px, 1fr));
+  gap: 10px;
+  min-width: 860px;
+}
+
+.contents {
+  display: contents;
+}
+
+.colLabel {
+  font-size: 13px;
+  color: var(--on-slate-muted);
+  text-align: center;
+  align-self: end;
+}
+
+.rowLabel {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--on-slate-muted);
+}
+
+.rowLabel b {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--on-slate);
+}
+
+.spare {
+  border: 1px dashed rgb(251 239 214 / 0.25);
+  border-radius: 16px;
+}
+
+.footer {
+  margin-top: 40px;
+  text-align: center;
+}

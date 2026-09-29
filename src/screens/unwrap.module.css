@@ -1,0 +1,576 @@
+.page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 16px 32px;
+  gap: 10px;
+}
+
+.top {
+  width: 100%;
+  max-width: 1040px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.brand {
+  font-family: var(--font-hand), cursive;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--on-slate);
+  text-decoration: none;
+}
+
+.link {
+  font-size: 14px;
+  color: var(--on-slate-muted);
+  text-underline-offset: 3px;
+}
+
+.intro {
+  max-width: 560px;
+  text-align: center;
+  animation: fadeUp 0.7s ease-out both;
+}
+
+.heading {
+  margin: 6px 0 4px;
+  font-family: var(--font-hand), cursive;
+  font-weight: 400;
+  font-size: clamp(34px, 7vw, 48px);
+  line-height: 1.05;
+  color: var(--cream);
+}
+
+.sub {
+  margin: 0;
+  min-height: 2.6em;
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--on-slate-muted);
+}
+
+/* Phones: one column (heading, bouquet, card, buttons). */
+.workspace {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 1160px;
+}
+
+.side {
+  display: contents;
+}
+
+.intro {
+  order: -1;
+}
+
+.letterArea {
+  order: 1;
+}
+
+.actions {
+  order: 2;
+}
+
+.cardBox {
+  position: relative;
+  width: min(100%, calc(min(66dvh, 760px) * 2 / 3));
+  aspect-ratio: 600 / 900;
+  container-type: inline-size;
+  transition: width 0.7s ease;
+  animation: arrive 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* once the card is out, the bouquet steps back a little to make room for the letter */
+.page:not([data-phase="arrive"]):not([data-phase="unwrapping"]) .cardBox {
+  width: min(100%, calc(min(46dvh, 620px) * 2 / 3));
+}
+
+/* Wide screens: the bouquet gets the left column to itself; words, the letter and
+   the buttons live on the right. */
+@media (min-width: 860px) {
+  .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(340px, 1fr);
+    align-items: center;
+    gap: 44px;
+    min-height: calc(100dvh - 90px);
+  }
+
+  .side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .intro {
+    text-align: left;
+  }
+
+  .actions {
+    justify-content: flex-start;
+  }
+
+  .letterArea {
+    justify-content: flex-start;
+  }
+
+  .cardBox,
+  .page:not([data-phase="arrive"]):not([data-phase="unwrapping"]) .cardBox {
+    justify-self: end;
+    width: min(100%, calc(min(86dvh, 1000px) * 2 / 3));
+  }
+}
+
+.card {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The letter lifting off the glowing flower. */
+.chip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(18px, 8cqw, 40px);
+  color: #3a3833;
+  text-shadow: 0 0 8px rgb(255 248 225 / 0.95);
+  pointer-events: none;
+  animation: lift 0.5s ease-out both;
+}
+
+@keyframes lift {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -190%);
+  }
+}
+
+.letterArea {
+  display: flex;
+  justify-content: center;
+  width: min(100%, 400px);
+}
+
+/* ——— the envelope ——— */
+
+.envelope {
+  --env-back: #d9b98f;
+  --env-front: #ead3ae;
+  --env-flap: #dfc197;
+  position: relative;
+  display: block;
+  width: min(340px, 86vw);
+  aspect-ratio: 1.55;
+  padding: 0;
+  border: 0;
+  background: none;
+  /* headroom for the letter as it slides out */
+  margin-top: 96px;
+  perspective: 900px;
+  cursor: pointer;
+  animation: slideIn 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+
+.envelope:focus-visible {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 6px;
+  border-radius: 10px;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(60px) rotate(-6deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-2deg);
+  }
+}
+
+.envelope > span {
+  position: absolute;
+}
+
+.envBack {
+  inset: 0;
+  border-radius: 8px;
+  background: var(--env-back);
+  box-shadow: 0 14px 30px rgb(0 0 0 / 0.28);
+}
+
+.envLetter {
+  left: 7%;
+  right: 7%;
+  top: 7%;
+  bottom: 6%;
+  z-index: 1;
+  border-radius: 6px;
+  background: #fffbf1;
+  transition: transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s;
+}
+
+.envLines {
+  position: absolute;
+  inset: 22% 12% 18%;
+  background: repeating-linear-gradient(transparent 0 13px, rgb(165 123 82 / 0.28) 13px 14px);
+}
+
+.envFront {
+  inset: 0;
+  z-index: 2;
+  border-radius: 8px;
+  background: var(--env-front);
+  clip-path: polygon(0 0, 50% 54%, 100% 0, 100% 100%, 0 100%);
+}
+
+.envFlap {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 60%;
+  z-index: 3;
+  background: var(--env-flap);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: 50% 0;
+  transition:
+    transform 0.6s ease-in-out,
+    z-index 0s linear 0.3s;
+}
+
+.envSeal {
+  left: 50%;
+  top: 60%;
+  z-index: 4;
+  width: 46px;
+  height: 46px;
+  transform: translate(-50%, -50%);
+  transition:
+    transform 0.35s ease-in,
+    opacity 0.35s ease-in;
+}
+
+.envSeal svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.envelope[data-open] .envSeal {
+  transform: translate(-50%, -50%) scale(0.3) rotate(40deg);
+  opacity: 0;
+}
+
+.envelope[data-open] .envFlap {
+  transform: rotateX(180deg);
+  z-index: 0;
+}
+
+.envelope[data-open] .envLetter {
+  transform: translateY(-50%);
+}
+
+/* ——— the letter ——— */
+
+.letter {
+  width: min(360px, 88vw);
+  min-height: 190px;
+  padding: 22px 26px 20px;
+  border-radius: 8px;
+  background: repeating-linear-gradient(#fffbf1 0 33px, rgb(165 123 82 / 0.22) 33px 34px) #fffbf1;
+  background-position: 0 14px;
+  color: #3a3833;
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.3);
+  transform: rotate(-1.5deg);
+  animation: unfold 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    transform: translateY(40px) rotate(-4deg) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-1.5deg);
+  }
+}
+
+.dear,
+.note,
+.signed {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 26px;
+  line-height: 34px;
+}
+
+.dear {
+  color: #5b564c;
+}
+
+.note {
+  min-height: 68px;
+  overflow-wrap: break-word;
+}
+
+.word {
+  white-space: nowrap;
+}
+
+.inked {
+  animation: ink 0.3s ease-out both;
+}
+
+@keyframes ink {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 22px;
+  margin-left: 2px;
+  vertical-align: -3px;
+  background: #3a3833;
+  animation: blink 0.9s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.signed {
+  margin-top: 6px;
+  text-align: right;
+  color: #5b564c;
+  animation: fadeUp 0.6s ease-out both;
+}
+
+/* ——— actions ——— */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  min-height: 46px;
+  margin-top: 6px;
+}
+
+.primary,
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-size: 15px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+
+.primary {
+  border: 0;
+  background: var(--cream);
+  color: var(--ink);
+}
+
+.ghost {
+  border: 1px solid rgb(244 234 215 / 0.5);
+  background: transparent;
+  color: var(--on-slate);
+}
+
+.primary:hover,
+.ghost:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.primary:focus-visible,
+.ghost:focus-visible {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 2px;
+}
+
+.ghost:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.links {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+/* ——— a card on its own ——— */
+
+.cardOnly {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  max-width: 520px;
+  margin: 48px auto 0;
+  text-align: center;
+}
+
+/* ——— a card reply ——— */
+
+.cardForm {
+  width: min(380px, 100%);
+  display: grid;
+  gap: 8px;
+  background: var(--cream);
+  color: var(--on-cream);
+  border-radius: 18px;
+  padding: 14px 16px 10px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.2);
+}
+
+.cardLabel {
+  font-size: 13px;
+  color: var(--on-cream-muted);
+}
+
+.cardText {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  resize: none;
+  outline: none;
+  font-family: var(--font-hand), cursive;
+  font-size: 24px;
+  line-height: 1.25;
+  color: var(--on-cream);
+}
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--on-cream-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cardFoot > span:first-child {
+  margin-right: auto;
+}
+
+.cardForm .ghost {
+  border-color: rgb(46 74 94 / 0.35);
+  color: var(--ink);
+  padding: 9px 16px;
+}
+
+.cardForm .primary {
+  background: var(--ink);
+  color: var(--cream);
+  padding: 9px 16px;
+}
+
+.cardForm .primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.over {
+  color: #a8472f;
+}
+
+.cardError {
+  min-height: 1.2em;
+  font-size: 13px;
+  color: #a8472f;
+}
+
+.sent {
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: rgb(251 239 214 / 0.12);
+  color: var(--on-slate);
+  font-size: 15px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro,
+  .cardBox,
+  .envelope,
+  .letter,
+  .inked,
+  .signed,
+  .chip {
+    animation: none;
+  }
+  .chip {
+    display: none;
+  }
+  .envLetter,
+  .envFlap,
+  .envSeal,
+  .cardBox {
+    transition: none;
+  }
+}
