@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { track } from "@/lib/track";
 import styles from "./signin.module.css";
 
 const ERRORS: Record<string, string> = {
@@ -52,7 +53,10 @@ export function SignIn({ next, google, error }: { next: string; google: boolean;
     if (mode === "signin") {
       const { error: err } = await auth.signInWithPassword({ email: address, password });
       if (err) setProblem(friendly(err.message));
-      else return done();
+      else {
+        track("signin");
+        return done();
+      }
     } else if (mode === "signup") {
       const { data, error: err } = await auth.signUp({
         email: address,
@@ -63,7 +67,10 @@ export function SignIn({ next, google, error }: { next: string; google: boolean;
         },
       });
       if (err) setProblem(friendly(err.message));
-      else if (data.session) return done();
+      else if (data.session) {
+        track("signup");
+        return done();
+      }
       else setNotice(`Almost there: we sent a link to ${address} to confirm it's you.`);
     } else {
       const { error: err } = await auth.resetPasswordForEmail(address, {

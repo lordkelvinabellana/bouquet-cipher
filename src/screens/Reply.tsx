@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { graphemes } from "@/core/text/canon";
 import { MAX_GRAPHEMES } from "@/core/text/limits";
+import { sessionId, track } from "@/lib/track";
 import styles from "./unwrap.module.css";
 
 export interface Viewer {
@@ -53,10 +54,13 @@ export function ReplyActions({ code, fromName, viewer, replyable }: { code: stri
   if (!writing) {
     return (
       <>
-        <button type="button" className={styles.ghost} onClick={() => setWriting(true)}>
+        <button type="button" className={styles.ghost} onClick={() => {
+          track("reply_start", { with: "card" }, code);
+          setWriting(true);
+        }}>
           Reply with a card
         </button>
-        <Link className={styles.primary} href={`/create?reply=${code}`}>
+        <Link className={styles.primary} href={`/create?reply=${code}`} onClick={() => track("reply_start", { with: "bouquet" }, code)}>
           Reply with a bouquet
         </Link>
       </>
@@ -70,7 +74,7 @@ export function ReplyActions({ code, fromName, viewer, replyable }: { code: stri
     setError("");
     const res = await fetch("/api/bouquets", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-bc-session": sessionId() },
       body: JSON.stringify({ kind: "card", message: text, replyTo: code, toName: fromName }),
     }).catch(() => null);
     const data = res ? ((await res.json().catch(() => ({}))) as { error?: string }) : { error: "You seem to be offline." };

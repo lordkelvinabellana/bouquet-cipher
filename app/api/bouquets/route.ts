@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { currentUser } from "@/lib/supabase/server";
+import { isBot } from "@/lib/events";
+import { recordEvent } from "@/server/analytics";
 import { getStore, type Addressing } from "@/server/store";
 import { validateNewBouquet } from "@/server/validate";
 
@@ -53,6 +55,13 @@ export async function POST(req: NextRequest) {
       if (original.senderId && original.senderId !== user?.id) to.recipientId = original.senderId;
     }
     const saved = await store.create(value, to);
+    if (!isBot(req.headers.get("user-agent"))) {
+      await recordEvent("sent", {
+        session: req.headers.get("x-bc-session"),
+        bouquet: saved.id,
+        props: { kind: value.kind, reply: value.replyTo !== null, signedIn: user !== null, inbox: to.recipientId !== null },
+      });
+    }
     return NextResponse.json({ id: saved.id, delivered: to.recipientId !== null }, { status: 201 });
   } catch (err) {
     console.error(err);

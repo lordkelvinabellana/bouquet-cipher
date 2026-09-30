@@ -15,6 +15,7 @@ import { MAX_GRAPHEMES } from "@/core/text/limits";
 import { useGardenInput } from "@/input/useGardenInput";
 import { exportPng, shareOrDownload } from "@/render/canvas/exportPng";
 import { VideoMaker } from "@/components/VideoMaker";
+import { sessionId, track, useTrackOnce } from "@/lib/track";
 import { useSignatureSeal } from "@/identity/signature";
 import { AccountLink } from "@/components/AccountLink";
 import { LiveBouquet } from "@/render/svg/LiveBouquet";
@@ -61,6 +62,7 @@ export interface ComposerProps {
 export function Composer({ initialTo = "", initialKey, account = null, replyTo = null }: ComposerProps) {
   const { ref, bind, live, final, count, refusal, reset } = useGardenInput();
   const [phase, setPhase] = useState<Phase>("write");
+  useTrackOnce("create_view", { reply: replyTo !== null });
   // Every draft gets its own key: the bouquet you watch grow is the one that's sent.
   const [key, setKey] = useState(() => (spentKeys.has(initialKey) ? newCipherKey() : initialKey));
   const [paper, setPaper] = useState(0);
@@ -107,13 +109,28 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
       : "That word is getting long for one stem. Add a space to start another."
     : "";
 
+  // count the first letter of each new message, once
+  const started = useRef(false);
+  useEffect(() => {
+    if (live && !started.current) {
+      started.current = true;
+      track("write_start", { reply: replyTo !== null });
+    }
+    if (!live) started.current = false;
+  }, [live, replyTo]);
+
+  const wrapIt = () => {
+    track("wrap", { length: count });
+    setPhase("wrap");
+  };
+
   const createLink = async () => {
     setPhase("saving");
     setError("");
     try {
       const res = await fetch("/api/bouquets", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "x-bc-session": sessionId() },
         body: JSON.stringify({ message: final, key, seal: mySeal, paper, toName: toName || null, fromName: fromName || null, replyTo }),
       });
       const data = (await res.json().catch(() => ({}))) as { id?: string; error?: string; delivered?: boolean };
@@ -131,6 +148,7 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
     if (!shared) return;
     try {
       await navigator.clipboard.writeText(shared.url);
+      track("link_copy", undefined, shared.code);
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -141,6 +159,7 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
   const shareImage = async (share: boolean) => {
     if (!shared || !tag) return;
     setSavingImage(true);
+    track("picture_save", { share }, shared.code);
     try {
       const blob = await exportPng(sceneGroups(layout, { seal, sealStyle, ribbonSeed, paper, tag }), { height: SHARE_FRAME.h });
       if (share) await shareOrDownload(blob, "bouquet.png", `${toName ? `A bouquet for ${toName}. ` : ""}Scan the tag or open ${shared.url} to read the flowers.`);
@@ -210,7 +229,7 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
             ).map(([id, label], i) => {
               const at = phase === "saving" ? 1 : ["write", "wrap", "shared"].indexOf(phase);
               const state = i < at ? "done" : i === at ? "current" : "next";
-              const go = id === "write" && phase === "wrap" ? () => setPhase("write") : id === "wrap" && phase === "write" && final ? () => setPhase("wrap") : null;
+              const go = id === "write" && phase === "wrap" ? () => setPhase("write") : id === "wrap" && phase === "write" && final ? wrapIt : null;
               return (
                 <li key={id} data-state={state} aria-current={state === "current" ? "step" : undefined}>
                   {go ? (
@@ -259,7 +278,7 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
               <span id="message-count" className={`${styles.counter} ${full ? styles.counterFull : left <= 10 ? styles.counterLow : ""}`}>
                 {count} / {MAX_GRAPHEMES}
               </span>
-              <button type="button" className={styles.wrap} disabled={!final} onClick={() => setPhase("wrap")}>
+              <button type="button" className={styles.wrap} disabled={!final} onClick={wrapIt}>
                 Wrap it
               </button>
             </div>
