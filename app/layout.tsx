@@ -15,6 +15,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: "Bouquet Cipher",
   description: "Type a message, grow a bouquet, and send it to someone. The flowers keep your words secret.",
+  openGraph: {
+    siteName: "Bouquet Cipher",
+    type: "website",
+    url: "/",
+    title: "Bouquet Cipher: say it with flowers",
+    description: "Type a message and watch it grow into a hand-drawn bouquet. Send it, and the flowers keep your words secret.",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

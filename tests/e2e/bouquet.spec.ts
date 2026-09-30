@@ -238,3 +238,27 @@ test("the link preview is a real picture", async ({ request }) => {
   expect(img.headers()["content-type"]).toContain("image/png");
   expect((await img.body()).length).toBeGreaterThan(20_000);
 });
+
+test("every link has a picture preview: the site, a bouquet and a card", async ({ request }) => {
+  const tags = async (path: string) => {
+    const html = await (await request.get(path, { headers: { "user-agent": "facebookexternalhit/1.1" } })).text();
+    const tag = (p: string) => html.match(new RegExp(`<meta property="${p}" content="([^"]+)"`))?.[1];
+    return { image: tag("og:image"), url: tag("og:url"), site: tag("og:site_name") };
+  };
+  const png = async (url: string | undefined) => {
+    const res = await request.get(new URL(url!).pathname + new URL(url!).search);
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toBe("image/png");
+    return (await res.body()).length;
+  };
+
+  const home = await tags("/");
+  expect(home.site).toBe("Bouquet Cipher");
+  expect(await png(home.image)).toBeGreaterThan(10_000);
+
+  const card = (await (await request.post("/api/bouquets", { data: { kind: "card", message: "A note" } })).json()) as { id: string };
+  const page = await tags(`/b/${card.id}`);
+  expect(page.url).toMatch(new RegExp(`/b/${card.id}$`));
+  expect(page.image).toContain(`/b/${card.id}/opengraph-image`);
+  expect(await png(page.image)).toBeGreaterThan(10_000);
+});

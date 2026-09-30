@@ -1,8 +1,9 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { after, NextResponse, type NextRequest } from "next/server";
 import { currentUser } from "@/lib/supabase/server";
 import { isBot } from "@/lib/events";
 import { recordEvent } from "@/server/analytics";
 import { getStore, type Addressing } from "@/server/store";
+import { warmLinkPreview } from "@/server/warm";
 import { validateNewBouquet } from "@/server/validate";
 
 /** Bouquets one address may create per 10 minutes (development is roomier, for test runs). */
@@ -62,6 +63,8 @@ export async function POST(req: NextRequest) {
         props: { kind: value.kind, reply: value.replyTo !== null, signedIn: user !== null, inbox: to.recipientId !== null },
       });
     }
+    // on the live site, have the link preview ready before anyone pastes the link
+    if (process.env.VERCEL_ENV === "production") after(() => warmLinkPreview(`${req.nextUrl.origin}/b/${saved.id}`));
     return NextResponse.json({ id: saved.id, delivered: to.recipientId !== null }, { status: 201 });
   } catch (err) {
     console.error(err);
