@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { VideoSpecimen } from "@/components/VideoSpecimen";
 import path from "node:path";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -182,6 +183,17 @@ export default async function SpecimenPage({ searchParams }: { searchParams: Pro
   }
   if (params.palettes) return <PaletteView messages={params.palettes.split("|")} />;
   if (params.seals) return <SealsView />;
+  // `?video=Your message&t=1,3,6&mystery=1` shows frames of the share video
+  if (params.video)
+    return (
+      <VideoSpecimen
+        message={params.video}
+        times={(params.t ?? "0.5,1.6,2.6,4,6,9,12").split(",").map(Number)}
+        reveal={!params.mystery}
+        toName={params.to ?? null}
+        fromName={params.from ?? null}
+      />
+    );
   if (params.focus) {
     const seeds = (params.seeds ?? "11,22,33").split(",").map(Number);
     return <FocusView chars={Array.from(params.focus)} seeds={seeds} />;

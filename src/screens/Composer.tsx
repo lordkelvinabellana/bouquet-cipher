@@ -14,6 +14,7 @@ import { FRAME, sceneGroups } from "@/core/scene/scene";
 import { MAX_GRAPHEMES } from "@/core/text/limits";
 import { useGardenInput } from "@/input/useGardenInput";
 import { exportPng, shareOrDownload } from "@/render/canvas/exportPng";
+import { VideoMaker } from "@/components/VideoMaker";
 import { useSignatureSeal } from "@/identity/signature";
 import { AccountLink } from "@/components/AccountLink";
 import { LiveBouquet } from "@/render/svg/LiveBouquet";
@@ -380,6 +381,21 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
                 <a className={styles.ghost} href={shared.url} target="_blank" rel="noopener">
                   Open it
                 </a>
+                {seal !== undefined ? (
+                  <VideoMaker
+                    layout={layout}
+                    cipher={cipher}
+                    seal={seal}
+                    sealStyle={sealStyle}
+                    ribbonSeed={ribbonSeed}
+                    toName={toName.trim() || null}
+                    fromName={fromName.trim() || null}
+                    url={shared.url}
+                    revealByDefault={false}
+                    buttonClass={styles.ghost}
+                    tone="cream"
+                  />
+                ) : null}
               </div>
               <button type="button" className={styles.textButton} onClick={startOver}>
                 Write another

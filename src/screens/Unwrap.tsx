@@ -22,6 +22,7 @@ import { apply } from "@/core/art/geom";
 import { exportPng, shareOrDownload } from "@/render/canvas/exportPng";
 import { LiveBouquet } from "@/render/svg/LiveBouquet";
 import { AccountLink } from "@/components/AccountLink";
+import { VideoMaker } from "@/components/VideoMaker";
 import { Paths } from "@/render/svg/Paths";
 import { Inked, LINGER, useAutoAdvance } from "./letter";
 import { ReplyActions, type Viewer } from "./Reply";
@@ -243,6 +244,18 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                 <button type="button" className={styles.ghost} onClick={savePicture} disabled={saving}>
                   {saving ? "Saving…" : "Save picture"}
                 </button>
+                <VideoMaker
+                  layout={layout}
+                  cipher={cipher}
+                  seal={signature}
+                  sealStyle={sealStyle}
+                  ribbonSeed={ribbonSeed}
+                  toName={toName}
+                  fromName={fromName}
+                  url={`${typeof window === "undefined" ? "" : window.location.origin}/b/${code}`}
+                  revealByDefault
+                  buttonClass={styles.ghost}
+                />
                 <ReplyActions code={code} fromName={fromName} viewer={viewer} replyable={replyable} />
               </>
             ) : null}

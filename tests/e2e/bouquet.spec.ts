@@ -116,6 +116,24 @@ test("the share picture's QR code opens the bouquet", async ({ page }, testInfo)
   await expect(page.getByRole("heading", { name: "Alex sent you a bouquet" })).toBeVisible();
 });
 
+test("a bouquet makes a share video, read out or kept a mystery", async ({ page }, testInfo) => {
+  await write(page, "Guess who");
+  await wrapAndLink(page, { to: "Sam" });
+  await page.getByRole("button", { name: "Make a video" }).click();
+  // senders keep the secret by default
+  await expect(page.getByRole("radio", { name: "Keep it a mystery" })).toBeChecked();
+  await page.getByRole("button", { name: "Create video" }).click();
+  const save = page.getByRole("button", { name: "Save video" });
+  await expect(save).toBeVisible({ timeout: 60_000 });
+  const download = page.waitForEvent("download");
+  await save.click();
+  const file = testInfo.outputPath((await download).suggestedFilename());
+  await (await download).saveAs(file);
+  const { size } = await import("node:fs").then((fs) => fs.statSync(file));
+  expect(file).toMatch(/\.(mp4|webm)$/);
+  expect(size).toBeGreaterThan(20_000);
+});
+
 test("a typed code opens the bouquet, however it's typed", async ({ page, request }) => {
   const res = await request.post("/api/bouquets", { data: { message: "I love you", fromName: "Jo" } });
   const { id } = (await res.json()) as { id: string };
