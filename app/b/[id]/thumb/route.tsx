@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { loadBouquet } from "@/server/load";
-import { bouquetPreviewSvg, cardPreviewSvg } from "@/server/preview";
+import { previewSvgFor } from "@/server/preview";
 
 const SIZE = { width: 360, height: 516 };
 
@@ -9,10 +9,7 @@ const SIZE = { width: 360, height: 516 };
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const b = await loadBouquet((await params).id);
   if (!b) return new Response("Not found", { status: 404 });
-  const svg =
-    b.kind === "card"
-      ? cardPreviewSvg(b.seal ?? 0, b.sealStyle)
-      : bouquetPreviewSvg({ message: b.message, salt: b.salt, paper: b.paper, cipherKey: b.cipherKey, seal: b.seal, sealStyle: b.sealStyle });
+  const svg = previewSvgFor(b);
   const src = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
   return new ImageResponse(
     (

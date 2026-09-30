@@ -34,3 +34,18 @@ export function ribbonSeedOf(cipher: Cipher | null, legacySalt = 0): number {
 export function sealOf(senderSeal: number | null | undefined, text: string, cipher: Cipher | null, legacySalt = 0): number {
   return senderSeal ?? signatureOf(text, saltOf(cipher, legacySalt));
 }
+
+/** A fixed key for the stand-in bouquet (see `budsBouquet`). */
+const BUDS_KEY = "ClosedBudsForTheGateAA";
+/** What the stand-in's flowers say, if anyone reads them: never anyone's real message. */
+const BUDS = "a garden grown for you ❤";
+
+/**
+ * A stand-in bouquet, the same for everyone: shown where a real bouquet is still kept
+ * away (the private garden's gate, a bouquet waiting for its answer), so nothing about
+ * the real message shows.
+ */
+export function budsBouquet(): { layout: BouquetLayout; cipher: Cipher | null; seal: number; ribbonSeed: number } {
+  const cipher = cipherOf(BUDS_KEY);
+  return { layout: growBouquet(BUDS, cipher), cipher, seal: 7, ribbonSeed: ribbonSeedOf(cipher) };
+}

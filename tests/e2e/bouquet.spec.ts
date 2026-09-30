@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { GATE_STATE } from "./gate";
 
 const MESSAGE = "Happy birthday Mom! Love you always.";
 
@@ -43,7 +44,7 @@ test("every bouquet has its own key: the same words grow differently and still r
   expect(await flowerArt(page)).toBe(second);
 
   // the recipient gets exactly the bouquet that was grown, and the app reads it back
-  const ctx = await browser.newContext();
+  const ctx = await browser.newContext({ storageState: GATE_STATE });
   const r = await ctx.newPage();
   await r.goto(url);
   await expect(r.locator("svg g[data-key]")).toHaveCount(8);
@@ -126,7 +127,7 @@ test("a bouquet can be written, wrapped, sent and read back elsewhere", async ({
   // the gift tag with its QR code hangs from the ribbon
   await expect(page.getByText("scan to read")).toBeVisible();
 
-  const recipient = await browser.newContext();
+  const recipient = await browser.newContext({ storageState: GATE_STATE });
   const r = await recipient.newPage();
   await r.goto(url);
   await expect(r).toHaveTitle("Kel sent you a bouquet");
@@ -217,7 +218,7 @@ test("reduced motion still unwraps and reads", async ({ browser, request }) => {
   const res = await request.post("/api/bouquets", { data: { message: "I love you", paper: 2 } });
   expect(res.status()).toBe(201);
   const { id } = (await res.json()) as { id: string };
-  const ctx = await browser.newContext({ reducedMotion: "reduce" });
+  const ctx = await browser.newContext({ reducedMotion: "reduce", storageState: GATE_STATE });
   const page = await ctx.newPage();
   await page.goto(`/b/${id}`);
   await expect(page.getByText("The flowers say: I love you")).toBeAttached({ timeout: 15_000 });

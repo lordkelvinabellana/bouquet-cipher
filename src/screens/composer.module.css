@@ -240,7 +240,8 @@
 }
 
 .field span {
-  width: 42px;
+  flex: none;
+  min-width: 42px;
 }
 
 .field input {
@@ -746,4 +747,84 @@
   font-weight: 600;
   color: var(--ink);
   text-underline-offset: 3px;
+}
+
+/* ——— a photo and a question (the private garden's extras) ——— */
+
+.photoStep {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.photoActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.photoActions .ghost {
+  position: relative;
+  cursor: pointer;
+}
+
+.photoActions .ghost:has(input:focus-visible) {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 2px;
+}
+
+.photoThumb {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  padding: 3px 3px 9px;
+  background: #fffdf7;
+  border-radius: 3px;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 0.18);
+  transform: rotate(3deg);
+}
+
+.lockToggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.lockToggle > input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: var(--ink);
+}
+
+.lockToggle > span {
+  display: grid;
+  gap: 2px;
+}
+
+.lockToggle .stepText {
+  margin: 0;
+}
+
+.select {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  font: 22px var(--font-hand), cursive;
+  color: var(--on-cream);
+  outline: none;
+  cursor: pointer;
+}
+
+.select:focus-visible {
+  outline: 2px solid rgb(233 142 114 / 0.8);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

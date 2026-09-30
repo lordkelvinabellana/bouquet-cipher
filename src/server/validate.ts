@@ -27,7 +27,23 @@ export interface NewBouquet {
   replyTo: string | null;
   /** The sender's seal style (set by the server from their account, never the request). */
   sealStyle?: string | null;
+  /** A photo tucked in with the letter (a name from POST /api/photos). */
+  photo?: string | null;
+  /** A secret question it waits behind, and the answer (hashed by the server before saving). */
+  lock?: { question: string; answer: string } | null;
+  /** Planted in "Our garden" (set by the server). */
+  garden?: boolean;
+  /** Which month of the garden it's planted in (0 is the first month), if not the current one. */
+  month?: number | null;
+  /** Made by a local run, a test or a preview deployment, not the live site (set by the server). */
+  test?: boolean;
+  /** The lock's answer, salted and hashed (set by the server from `lock`). */
+  lockHash?: string | null;
 }
+
+export const PHOTO_NAME = /^[a-z0-9]{24}\.jpg$/;
+export const MAX_QUESTION = 120;
+export const MAX_ANSWER = 60;
 
 export type Validated = { ok: true; value: NewBouquet } | { ok: false; error: string };
 
@@ -73,7 +89,20 @@ export function validateNewBouquet(body: unknown): Validated {
     return { ok: false, error: "Invalid reply." };
   }
   const replyTo = typeof b.replyTo === "string" ? b.replyTo : null;
-  return { ok: true, value: { kind, message, salt, paper, cipherKey, seal, toName: to.value, fromName: from.value, replyTo } };
+  if (b.photo !== undefined && b.photo !== null && (typeof b.photo !== "string" || !PHOTO_NAME.test(b.photo))) return { ok: false, error: "Invalid photo." };
+  const photo = typeof b.photo === "string" ? b.photo : null;
+  let lock: NewBouquet["lock"] = null;
+  if (b.lock !== undefined && b.lock !== null) {
+    const l = b.lock as Record<string, unknown>;
+    const question = typeof l.question === "string" ? canon(l.question.replace(/[\r\n]+/g, " ")) : "";
+    const answer = typeof l.answer === "string" ? l.answer.trim() : "";
+    if (!question || graphemes(question).length > MAX_QUESTION) return { ok: false, error: `The question needs to be 1 to ${MAX_QUESTION} characters.` };
+    if (!answer || answer.length > MAX_ANSWER) return { ok: false, error: `The answer needs to be 1 to ${MAX_ANSWER} characters.` };
+    lock = { question, answer };
+  }
+  const month = b.month === undefined || b.month === null ? null : b.month;
+  if (month !== null && (typeof month !== "number" || !Number.isInteger(month) || month < 0 || month > 1200)) return { ok: false, error: "Invalid month." };
+  return { ok: true, value: { kind, message, salt, paper, cipherKey, seal, toName: to.value, fromName: from.value, replyTo, photo, lock, month } };
 }
 
 export { ID_PATTERN };

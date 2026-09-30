@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { loadBouquet } from "@/server/load";
-import { bouquetPreviewSvg, cardPreviewSvg } from "@/server/preview";
+import { bouquetPreviewSvg, previewSvgFor } from "@/server/preview";
 
 export const alt = "A bouquet of flowers with a hidden message";
 export const size = { width: 1200, height: 630 };
@@ -10,11 +10,8 @@ export const contentType = "image/png";
 export default async function PreviewImage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const b = await loadBouquet(id);
-  // a card shows its sealed envelope; a bouquet, its flowers (never the words)
-  const svg =
-    b?.kind === "card"
-      ? cardPreviewSvg(b.seal ?? 0, b.sealStyle)
-      : bouquetPreviewSvg({ message: b?.message ?? "", salt: b?.salt, paper: b?.paper, cipherKey: b?.cipherKey, seal: b?.seal, sealStyle: b?.sealStyle });
+  // a card shows its sealed envelope, a locked bouquet its closed buds, and a bouquet its flowers (never the words)
+  const svg = b ? previewSvgFor(b) : bouquetPreviewSvg({ message: "" });
   const src = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
   return new ImageResponse(
     (

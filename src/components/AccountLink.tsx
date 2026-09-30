@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { FLAGS } from "@/lib/flags";
 import styles from "./account.module.css";
 
 interface Me {
@@ -11,7 +12,7 @@ interface Me {
 }
 
 /**
- * "Sign in", or "Your bouquets" with the unread count. Fetched after load, so the pages
+ * "Sign in", or "Your bouquets" with the unread count (or "Our garden" when accounts are off). Fetched after load, so the pages
  * around it can stay static; it simply isn't shown when accounts aren't set up.
  */
 export function AccountLink({ tone = "slate" }: { tone?: "slate" | "cream" }) {
@@ -27,8 +28,16 @@ export function AccountLink({ tone = "slate" }: { tone?: "slate" | "cream" }) {
       live = false;
     };
   }, [path]);
-  if (!me?.enabled) return null;
   const cls = `${styles.link} ${tone === "cream" ? styles.cream : ""}`;
+  // without accounts, the private garden's own page takes this spot
+  if (!FLAGS.accounts) {
+    return FLAGS.garden && path !== "/garden" ? (
+      <Link className={cls} href="/garden">
+        Our garden
+      </Link>
+    ) : null;
+  }
+  if (!me?.enabled) return null;
   if (!me.user) {
     return (
       <Link className={cls} href={`/login?next=${encodeURIComponent(path || "/")}`}>

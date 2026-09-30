@@ -239,3 +239,10 @@
   top: 16px;
   right: 20px;
 }
+
+/* a monthsary: the greeting takes the headline's place */
+.celebrate {
+  font-size: clamp(44px, 7.5vw, 72px);
+  color: #f7c6d4;
+  text-wrap: balance;
+}

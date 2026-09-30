@@ -47,3 +47,4 @@ npm-debug.log*
 /.claude/agents/
 /skills-lock.json
 /.codex/
+/.playwright/

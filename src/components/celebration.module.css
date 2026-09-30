@@ -1,0 +1,125 @@
+.petals {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.petals span {
+  position: absolute;
+  top: -40px;
+  border-radius: 80% 0 80% 0;
+  opacity: 0.9;
+  animation-name: fall;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+}
+
+@keyframes fall {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate(var(--sway), 52vh) rotate(200deg);
+  }
+  100% {
+    transform: translate(calc(var(--sway) * -0.6), 108vh) rotate(420deg);
+    opacity: 0.85;
+  }
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(38 50 56 / 0.72);
+  animation: fadeIn 0.6s var(--ease-out) both;
+}
+
+.note {
+  width: min(420px, 100%);
+  padding: 26px 28px 22px;
+  border-radius: 10px;
+  background: repeating-linear-gradient(#fffbf1 0 33px, rgb(165 123 82 / 0.2) 33px 34px) #fffbf1;
+  background-position: 0 18px;
+  color: #3a3833;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.4);
+  transform: rotate(-1.2deg);
+  animation: rise 0.8s var(--ease-out) 0.15s both;
+}
+
+.title {
+  margin: 0 0 10px;
+  font-family: var(--font-hand), cursive;
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.05;
+  color: #8a3b52;
+  text-wrap: balance;
+}
+
+.text {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 25px;
+  line-height: 34px;
+  white-space: pre-line;
+  text-wrap: pretty;
+}
+
+.from {
+  margin: 8px 0 0;
+  text-align: right;
+  font-family: var(--font-hand), cursive;
+  font-size: 25px;
+  color: #5b564c;
+}
+
+.button {
+  display: block;
+  margin: 18px auto 0;
+  padding: 12px 28px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--cream);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.button:focus-visible {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 2px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px) rotate(-3deg) scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .petals {
+    display: none;
+  }
+  .backdrop,
+  .note {
+    animation: none;
+  }
+}
