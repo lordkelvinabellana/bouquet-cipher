@@ -34,7 +34,7 @@
   display: block;
   width: min(100%, calc(min(44dvh, 560px) * 2 / 3));
   height: auto;
-  animation: settle 0.9s var(--ease-out) both;
+  animation: settle var(--dur-scene) var(--ease-out) both;
 }
 
 .panel {
@@ -66,7 +66,7 @@
 }
 
 .form[data-shake] {
-  animation: nope 360ms var(--ease-out);
+  animation: nope var(--dur-quick) var(--ease-out);
 }
 
 .field {
@@ -87,7 +87,7 @@
   font: 26px/1.2 var(--font-hand), cursive;
   text-align: center;
   outline: none;
-  transition: border-color 160ms var(--ease-out), background-color 160ms var(--ease-out);
+  transition: border-color var(--dur-press) var(--ease-out), background-color var(--dur-press) var(--ease-out);
 }
 
 .input:focus {
@@ -174,5 +174,5 @@
   font-family: var(--font-hand), cursive;
   font-size: 28px;
   color: #f7c6d4;
-  animation: settle 0.5s var(--ease-out) both;
+  animation: settle var(--dur-base) var(--ease-out) both;
 }

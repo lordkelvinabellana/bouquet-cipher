@@ -21,6 +21,7 @@ import { cameraMatrix, presentedCamera, sceneGroups } from "@/core/scene/scene";
 import { apply } from "@/core/art/geom";
 import { clock, puzzleOf } from "@/core/puzzle";
 import { flyLetter, type Point } from "@/render/fly";
+import { CSS_EASE, DUR } from "@/anim/motion";
 import { track, useTrackOnce } from "@/lib/track";
 import { exportPng, shareOrDownload } from "@/render/canvas/exportPng";
 import { LiveBouquet } from "@/render/svg/LiveBouquet";
@@ -105,6 +106,26 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
     let n = 0;
     return steps.map((s) => (s.kind === "element" ? n++ : -1));
   }, [steps]);
+
+  // The bouquet steps back to make room for the letter. Rather than animating its size
+  // (which redraws the whole picture every frame), it's laid out at the new size at once
+  // and glides there from the old one with a transform.
+  const lastBox = useRef<DOMRect | null>(null);
+  useLayoutEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const now = el.getBoundingClientRect();
+    const was = lastBox.current;
+    lastBox.current = now;
+    if (!was || reduced || Math.abs(was.width - now.width) < 1) return;
+    el.animate(
+      [
+        { transformOrigin: "0 0", transform: `translate(${was.left - now.left}px, ${was.top - now.top}px) scale(${was.width / now.width})` },
+        { transformOrigin: "0 0", transform: "none" },
+      ],
+      { duration: DUR.slow * 1000, easing: CSS_EASE.inOut },
+    );
+  }, [phase, reduced]);
 
   /** A flower's centre on screen. */
   const flowerAt = useCallback(

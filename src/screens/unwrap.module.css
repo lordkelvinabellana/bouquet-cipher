@@ -33,7 +33,7 @@
 .intro {
   max-width: 560px;
   text-align: center;
-  animation: fadeUp 0.7s ease-out both;
+  animation: fadeUp var(--dur-base) var(--ease-out) both;
 }
 
 .heading {
@@ -84,8 +84,8 @@
   width: min(100%, calc(min(66dvh, 760px) * 2 / 3));
   aspect-ratio: 600 / 900;
   container-type: inline-size;
-  transition: width 0.7s ease;
-  animation: arrive 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* its size changes between phases glide with a transform (see Unwrap.tsx) */
+  animation: arrive var(--dur-scene) var(--ease-out) both;
 }
 
 /* once the card is out, the bouquet steps back a little to make room for the letter */
@@ -182,7 +182,7 @@
   margin-top: 96px;
   perspective: 900px;
   cursor: pointer;
-  animation: slideIn 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+  animation: slideIn var(--dur-slow) var(--ease-out) both;
 }
 
 .envelope:focus-visible {
@@ -221,7 +221,7 @@
   z-index: 1;
   border-radius: 6px;
   background: #fffbf1;
-  transition: transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s;
+  transition: transform var(--dur-scene) var(--ease-in-out) 0.5s;
 }
 
 .envLines {
@@ -297,7 +297,7 @@
   color: #3a3833;
   box-shadow: 0 16px 34px rgb(0 0 0 / 0.3);
   transform: rotate(-1.5deg);
-  animation: unfold 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: unfold var(--dur-slow) var(--ease-out) both;
 }
 
 @keyframes unfold {
@@ -334,7 +334,7 @@
 }
 
 .inked {
-  animation: ink 0.3s ease-out both;
+  animation: ink var(--dur-quick) var(--ease-out) both;
 }
 
 @keyframes ink {
@@ -368,7 +368,7 @@
   margin-top: 6px;
   text-align: right;
   color: #5b564c;
-  animation: fadeUp 0.6s ease-out both;
+  animation: fadeUp var(--dur-base) var(--ease-out) both;
 }
 
 /* ——— actions ——— */
@@ -391,7 +391,7 @@
   font-size: 15px;
   cursor: pointer;
   text-decoration: none;
-  transition: transform 160ms var(--ease-out);
+  transition: transform var(--dur-press) var(--ease-out);
 }
 
 .primary {
@@ -581,7 +581,7 @@
   text-align: center;
   vertical-align: baseline;
   cursor: default;
-  transition: background-color 200ms var(--ease-out);
+  transition: background-color var(--dur-quick) var(--ease-out);
 }
 
 .slot[data-open] {
@@ -665,9 +665,9 @@
   cursor: pointer;
   touch-action: manipulation;
   transition:
-    transform 120ms var(--ease-out),
-    background-color 200ms var(--ease-out),
-    opacity 200ms var(--ease-out);
+    transform var(--dur-press) var(--ease-out),
+    background-color var(--dur-quick) var(--ease-out),
+    opacity var(--dur-quick) var(--ease-out);
 }
 
 .key:active:not(:disabled) {
@@ -690,7 +690,7 @@
 }
 
 .key[data-shake] {
-  animation: nope 320ms var(--ease-out);
+  animation: nope var(--dur-quick) var(--ease-out);
 }
 
 @keyframes nope {
@@ -734,7 +734,7 @@
   background: rgb(158 199 154 / 0.18);
   color: var(--on-slate);
   font-size: 15px;
-  animation: fadeUp 0.6s ease-out both;
+  animation: fadeUp var(--dur-base) var(--ease-out) both;
 }
 
 @media (min-width: 860px) {
@@ -870,7 +870,7 @@
   border-radius: 4px;
   box-shadow: 0 14px 30px rgb(0 0 0 / 0.32);
   transform: rotate(2.5deg);
-  animation: tuckOut 0.9s var(--ease-out) 0.35s both;
+  animation: tuckOut var(--dur-scene) var(--ease-out) 0.35s both;
 }
 
 .photo img {

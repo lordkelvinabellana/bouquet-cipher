@@ -6,6 +6,7 @@
  * The view zooms out immediately when the bouquet outgrows the card, and zooms back in
  * and rebalances only after typing pauses, so it never bobs while you type.
  */
+import { SETTLE } from "@/anim/motion";
 import { memo, useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { animate, glidePose, growIn, growStem, retractStem, samePose, tagDrop, wiltOut, wrapIn, wrapOut, type Pose, type WrapPart } from "@/anim/grow";
@@ -192,9 +193,7 @@ function useCamera(target: Camera, reduced: boolean, fits: (c: Camera) => boolea
       const start = current.current;
       if (reduced || document.hidden) return apply(target);
       const c = animate(0, 1, {
-        type: "spring",
-        stiffness: moved ? 90 : 110,
-        damping: 22,
+        ...SETTLE,
         onUpdate: (t) =>
           apply({
             zoom: start.zoom + (target.zoom - start.zoom) * t,

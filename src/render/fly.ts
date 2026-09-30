@@ -5,6 +5,8 @@
  * was hidden to where it's read.
  */
 
+import { CSS_EASE, DUR } from "@/anim/motion";
+
 export interface Point {
   x: number;
   y: number;
@@ -20,7 +22,7 @@ export function flyLetter(char: string, from: Point, target: HTMLElement, delay 
   const land = () => {
     target.style.visibility = "";
     target.style.animation = "none";
-    target.animate([{ transform: "scale(1.35)" }, { transform: "scale(1)" }], { duration: 260, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
+    target.animate([{ transform: "scale(1.35)" }, { transform: "scale(1)" }], { duration: DUR.quick * 1000, easing: CSS_EASE.out });
   };
   if (!to.width && !to.height) return land();
 
@@ -62,7 +64,7 @@ export function flyLetter(char: string, from: Point, target: HTMLElement, delay 
       { transform: at(end, 1.08), opacity: 1, backgroundColor: "#FFF6DA", boxShadow: "0 4px 14px rgb(0 0 0 / 0.2), 0 0 0 2px rgb(255 246 218 / 0.4)", offset: 0.88 },
       { transform: at(end, 1), opacity: 1, backgroundColor: "rgb(255 246 218 / 0)", boxShadow: "0 0 0 0 rgb(0 0 0 / 0), 0 0 0 0 rgb(255 246 218 / 0)", offset: 1 },
     ],
-    { duration: FLIGHT_MS, delay, easing: "cubic-bezier(0.45, 0, 0.25, 1)", fill: "both" },
+    { duration: FLIGHT_MS, delay, easing: CSS_EASE.inOut, fill: "both" },
   );
   const done = () => {
     el.remove();

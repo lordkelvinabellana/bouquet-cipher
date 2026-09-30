@@ -4,7 +4,6 @@
  * bouquet's question (the same look, a different question and endpoint).
  */
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { budsBouquet } from "@/core/bouquet";
 import { LiveBouquet } from "@/render/svg/LiveBouquet";
@@ -33,7 +32,6 @@ export function Gate({
   /** Shown for a moment once the answer is right, before going in. */
   welcome?: string | null;
 }) {
-  const router = useRouter();
   const buds = useMemo(() => budsBouquet(), []);
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
@@ -56,8 +54,9 @@ export function Gate({
         setWelcomed(true);
         await new Promise((r) => setTimeout(r, 1400));
       }
-      if (next) router.replace(next);
-      router.refresh();
+      // a fresh page load, so the new cookie is sent and nothing stale from before the gate is reused
+      if (next) window.location.replace(next);
+      else window.location.reload();
       return;
     }
     const data = res ? ((await res.json().catch(() => ({}))) as { error?: string }) : { error: "You seem to be offline." };

@@ -8,6 +8,7 @@
  * Browsers pause animation frames in background tabs; each animation also has a timed
  * fallback that jumps to its end state, so nothing is ever left invisible or half-wilted.
  */
+import { DUR, EASE, POP, SETTLE } from "./motion";
 import { animate } from "motion";
 import { compose, rotate, translate, type Mat, type Pt } from "@/core/art/geom";
 
@@ -51,7 +52,7 @@ function setT(node: SVGGElement, sx: number, sy: number, rot: number) {
 
 function fadeIn(node: Element, delay: number): Stop {
   node.setAttribute("opacity", "0");
-  const c = animate(0, 1, { duration: 0.14, delay, onUpdate: (v) => node.setAttribute("opacity", v.toFixed(3)) });
+  const c = animate(0, 1, { duration: DUR.press, delay, ease: EASE.out, onUpdate: (v) => node.setAttribute("opacity", v.toFixed(3)) });
   return guarded(c, delay + 0.6, () => node.removeAttribute("opacity"));
 }
 
@@ -88,9 +89,7 @@ export function glidePose(node: SVGGElement, from: Pose, to: Pose, reduced: bool
   set(from);
   const mix = (a: number, b: number, t: number) => a + (b - a) * t;
   const c = animate(0, 1, {
-    type: "spring",
-    stiffness: 110,
-    damping: 20,
+    ...SETTLE,
     onUpdate: (t) => set({ swing: mix(from.swing, to.swing, t), shift: [mix(from.shift[0], to.shift[0], t), mix(from.shift[1], to.shift[1], t)] }),
   });
   return guarded(c, 1.6, () => set(to));
@@ -102,10 +101,7 @@ export function growIn(node: SVGGElement, kind: ElementKind, delay: number, redu
   const unfurl = kind === "leaf" ? -26 : kind === "mark" ? -14 : 0;
   setT(node, 0.001, 0.001, unfurl);
   const c = animate(0, 1, {
-    type: "spring",
-    stiffness: 200,
-    damping: 17,
-    mass: 0.9,
+    ...POP,
     delay,
     onUpdate: (v) => {
       const sy = Math.max(0.001, v);
@@ -119,8 +115,8 @@ export function growIn(node: SVGGElement, kind: ElementKind, delay: number, redu
 /** Droop outward, shrink and fade (Backspace). Calls `done` when finished. */
 export function wiltOut(node: SVGGElement, reduced: boolean, done: () => void): Stop {
   const c = animate(0, 1, {
-    duration: reduced ? 0.12 : 0.55,
-    ease: [0.45, 0, 0.9, 0.55],
+    duration: reduced ? DUR.press : DUR.base,
+    ease: EASE.in,
     onUpdate: (v) => {
       if (!reduced) setT(node, 1 - 0.35 * v, 1 - 0.35 * v, 38 * v);
       node.setAttribute("opacity", (1 - v).toFixed(3));
@@ -134,9 +130,7 @@ export function growStem(node: SVGGElement, reduced: boolean): Stop {
   if (reduced || document.hidden) return fadeIn(node, 0);
   node.setAttribute("transform", "scale(0.001)");
   const c = animate(0, 1, {
-    type: "spring",
-    stiffness: 170,
-    damping: 20,
+    ...POP,
     onUpdate: (v) => node.setAttribute("transform", `scale(${Math.max(0.001, v).toFixed(4)})`),
   });
   return guarded(c, 1.6, () => node.removeAttribute("transform"));
@@ -145,8 +139,8 @@ export function growStem(node: SVGGElement, reduced: boolean): Stop {
 /** A removed stem shrinks back into the tie. */
 export function retractStem(node: SVGGElement, reduced: boolean, done: () => void): Stop {
   const c = animate(1, 0, {
-    duration: reduced ? 0.12 : 0.45,
-    ease: "easeIn",
+    duration: reduced ? DUR.press : DUR.base,
+    ease: EASE.in,
     onUpdate: (v) => {
       if (!reduced) node.setAttribute("transform", `scale(${Math.max(0.001, v).toFixed(4)})`);
       node.setAttribute("opacity", Math.min(1, v * 1.5).toFixed(3));
@@ -168,7 +162,7 @@ export function wrapIn(node: SVGGElement, part: WrapPart, reduced: boolean): Sto
     node.setAttribute("opacity", Math.min(1, t * 2.2).toFixed(3));
   };
   set(0);
-  const c = animate(0, 1, { type: "spring", stiffness: 120, damping: 17, delay, onUpdate: set });
+  const c = animate(0, 1, { ...POP, delay, onUpdate: set });
   return guarded(c, delay + 1.8, () => {
     node.removeAttribute("transform");
     node.removeAttribute("opacity");
@@ -179,9 +173,9 @@ export function wrapIn(node: SVGGElement, part: WrapPart, reduced: boolean): Sto
 export function wrapOut(node: SVGGElement, part: WrapPart, reduced: boolean, done: () => void): Stop {
   const delay = reduced ? 0 : part === "right" ? 0 : part === "left" ? 0.12 : 0.3;
   const c = animate(0, 1, {
-    duration: reduced ? 0.15 : 0.75,
+    duration: reduced ? DUR.press : DUR.slow,
     delay,
-    ease: [0.5, 0, 0.75, 0.4],
+    ease: EASE.in,
     onUpdate: (v) => {
       if (!reduced) {
         if (part === "back") node.setAttribute("transform", `translate(0 ${(v * 60).toFixed(2)}) scale(${(1 - 0.25 * v).toFixed(4)})`);

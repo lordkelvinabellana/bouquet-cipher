@@ -157,7 +157,7 @@
   color: var(--cream);
   font-size: 15px;
   cursor: pointer;
-  transition: transform 160ms var(--ease-out), opacity 160ms var(--ease-out);
+  transition: transform var(--dur-press) var(--ease-out), opacity var(--dur-press) var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -189,7 +189,7 @@
 }
 
 .shake {
-  animation: shake 0.32s ease;
+  animation: shake var(--dur-quick) var(--ease-out);
 }
 
 @keyframes shake {
@@ -367,7 +367,7 @@
   height: 34px;
   border-radius: 50%;
   box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform var(--dur-press) var(--ease-out), box-shadow var(--dur-press) var(--ease-out);
 }
 
 .swatch em {
@@ -445,7 +445,7 @@
   line-height: 1.15;
   color: rgb(59 58 54 / 0.55);
   pointer-events: none;
-  animation: emptyIn 400ms var(--ease-out) both;
+  animation: emptyIn var(--dur-base) var(--ease-out) both;
 }
 
 .emptyCard span {
@@ -487,8 +487,8 @@
   line-height: 1.2;
   cursor: pointer;
   transition:
-    transform 160ms var(--ease-out),
-    background-color 160ms var(--ease-out);
+    transform var(--dur-press) var(--ease-out),
+    background-color var(--dur-press) var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
