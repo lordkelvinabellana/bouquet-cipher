@@ -72,6 +72,44 @@ test("tapping skips ahead", async ({ page, request }) => {
   await expect(page.getByText("Reading the flowers")).toBeVisible({ timeout: 5_000 });
 });
 
+test("reading it out, each letter flies from its flower into the note", async ({ page, request }) => {
+  const res = await request.post("/api/bouquets", { data: { message: "Hi there" } });
+  const { id } = (await res.json()) as { id: string };
+  await page.goto(`/b/${id}`);
+  await page.getByRole("button", { name: "Unwrap it" }).click();
+  await page.getByRole("button", { name: "Open the envelope" }).first().click({ timeout: 10_000 });
+  // a letter in the air, on its way to the note
+  await expect(page.locator("body > span[aria-hidden]").first()).toBeAttached({ timeout: 8_000 });
+  await expect(page.getByLabel("The message")).toContainText("Hi there", { timeout: 15_000 });
+});
+
+test("decode it yourself: guess letters until the note is filled", async ({ page, request }) => {
+  const res = await request.post("/api/bouquets", { data: { message: "Hi Sam!", fromName: "Alex" } });
+  const { id } = (await res.json()) as { id: string };
+  await page.goto(`/b/${id}`);
+  await page.getByRole("button", { name: "Decode it yourself" }).click();
+  await expect(page.getByRole("heading", { name: "Can you read it?" })).toBeVisible({ timeout: 10_000 });
+  // punctuation is given; letters start hidden, with their clues
+  await expect(page.getByLabel("The message, still hidden")).toContainText("!");
+  await expect(page.getByRole("button", { name: /hidden vowel/ }).first()).toBeVisible();
+  await page.getByRole("button", { name: "Guess Z" }).click();
+  await expect(page.getByRole("button", { name: "Guess Z, not in the message" })).toBeDisabled();
+  for (const k of "hism") await page.keyboard.press(k);
+  await page.getByRole("button", { name: "Guess A" }).click();
+  await expect(page.getByText(/You decoded it in 6 guesses, 1 wrong/)).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByLabel("The message")).toContainText("Hi Sam!");
+});
+
+test("a ?solve link opens straight into the puzzle", async ({ page, request }) => {
+  const res = await request.post("/api/bouquets", { data: { message: "Guess me" } });
+  const { id } = (await res.json()) as { id: string };
+  await page.goto(`/b/${id}?solve`);
+  await page.getByRole("button", { name: "Unwrap it" }).click();
+  await expect(page.getByRole("heading", { name: "Can you read it?" })).toBeVisible({ timeout: 10_000 });
+  await page.getByRole("button", { name: "Read it to me instead" }).click();
+  await expect(page.getByLabel("The message")).toContainText("Guess me", { timeout: 15_000 });
+});
+
 test("the home page leads to creating and decoding", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Say it with flowers." })).toBeVisible();

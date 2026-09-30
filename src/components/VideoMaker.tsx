@@ -70,7 +70,7 @@ export function VideoMaker({
   const share = async () => {
     if (!shareFile || !nav) return;
     try {
-      await nav.share({ files: [shareFile], text: reveal ? `Every flower is a letter. ${url}` : `Can you read it? Every flower is a letter. ${url}` });
+      await nav.share({ files: [shareFile], text: reveal ? `Every flower is a letter. ${url}` : `Can you read it? Every flower is a letter. ${url}?solve` });
     } catch (err) {
       if ((err as DOMException)?.name !== "AbortError") downloadBlob(shareFile, shareFile.name);
     }

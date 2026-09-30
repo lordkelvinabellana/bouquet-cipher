@@ -42,7 +42,7 @@ export function Inked({ text }: { text: string }) {
         return (
           <span key={t} className={styles.word}>
             {Array.from(graphemes(token)).map((g) => (
-              <span key={n++} className={styles.inked}>
+              <span key={n} data-i={n++} className={styles.inked}>
                 {g}
               </span>
             ))}
