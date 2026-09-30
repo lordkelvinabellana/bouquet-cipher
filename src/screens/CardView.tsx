@@ -3,6 +3,7 @@
  * A card: a reply that's just words. The envelope, sealed with the sender's seal, opens
  * by itself and the note is written out; then you can answer it.
  */
+import { useTrackOnce } from "@/lib/track";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useReducedMotion } from "motion/react";
@@ -36,6 +37,7 @@ export function CardView({ code, message, seal, sealStyle, toName, fromName, vie
   const [phase, setPhase] = useState<Phase>("envelope");
   const [shown, setShown] = useState(0);
   useSeen(code, viewer);
+  useTrackOnce("open", { kind: "card", signedIn: viewer.signedIn }, code);
 
   const open = useCallback(() => setPhase((p) => (p === "envelope" ? "opening" : p)), []);
   useAutoAdvance(phase === "envelope", reduced ? LINGER.envelope / 2 : LINGER.envelope, open);

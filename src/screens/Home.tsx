@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useTrackOnce } from "@/lib/track";
 import { useEffect, useMemo, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { cipherOf, growBouquet } from "@/core/bouquet";
@@ -48,6 +49,7 @@ export function Home() {
   const cipher = useMemo(() => cipherOf(key), [key]);
   const layout = useMemo(() => growBouquet(canon(typed, "live"), cipher), [typed, cipher]);
 
+  useTrackOnce("home_view");
   return (
     <main className={styles.page}>
       <div className={styles.account}>
