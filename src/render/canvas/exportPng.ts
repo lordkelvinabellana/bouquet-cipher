@@ -12,7 +12,7 @@ import type { DrawGroup } from "@/core/scene/scene";
 /** iOS Safari refuses canvases above about 16.7 megapixels. */
 const MAX_PIXELS = 16_000_000;
 
-function noiseTile(): HTMLCanvasElement {
+export function noiseTile(): HTMLCanvasElement {
   const size = 200;
   const tile = document.createElement("canvas");
   tile.width = tile.height = size;
@@ -30,12 +30,12 @@ function noiseTile(): HTMLCanvasElement {
   return tile;
 }
 
-function fontFamily(font: Label["font"]): string {
+export function fontFamily(font: Label["font"]): string {
   const css = getComputedStyle(document.documentElement).getPropertyValue(font === "hand" ? "--font-hand" : "--font-serif").trim();
   return css || (font === "hand" ? "cursive" : "Georgia, serif");
 }
 
-function drawLabels(ctx: CanvasRenderingContext2D, labels: readonly Label[]) {
+export function drawLabels(ctx: CanvasRenderingContext2D, labels: readonly Label[]) {
   for (const l of labels) {
     ctx.globalAlpha = 1;
     ctx.fillStyle = l.color;
@@ -47,6 +47,19 @@ function drawLabels(ctx: CanvasRenderingContext2D, labels: readonly Label[]) {
     ctx.fillText(l.text, l.x, l.y);
     if ("letterSpacing" in spaced) spaced.letterSpacing = "0px";
   }
+}
+
+/** Fill one group's shapes (and write its labels) under its own transform. */
+export function drawGroup(ctx: CanvasRenderingContext2D, g: DrawGroup, path: (d: string) => Path2D = (d) => new Path2D(d), alpha = 1) {
+  ctx.save();
+  ctx.transform(g.m[0], g.m[1], g.m[2], g.m[3], g.m[4], g.m[5]);
+  for (const s of g.shapes) {
+    ctx.globalAlpha = (s.opacity ?? 1) * alpha;
+    ctx.fillStyle = s.fill;
+    ctx.fill(path(s.d), s.rule === "evenodd" ? "evenodd" : "nonzero");
+  }
+  if (g.labels) drawLabels(ctx, g.labels);
+  ctx.restore();
 }
 
 export async function exportPng(
@@ -69,17 +82,7 @@ export async function exportPng(
   if (!ctx) throw new Error("Canvas isn't available.");
   ctx.scale(scale, scale);
 
-  for (const g of groups) {
-    ctx.save();
-    ctx.transform(g.m[0], g.m[1], g.m[2], g.m[3], g.m[4], g.m[5]);
-    for (const s of g.shapes) {
-      ctx.globalAlpha = s.opacity ?? 1;
-      ctx.fillStyle = s.fill;
-      ctx.fill(new Path2D(s.d), s.rule === "evenodd" ? "evenodd" : "nonzero");
-    }
-    if (g.labels) drawLabels(ctx, g.labels);
-    ctx.restore();
-  }
+  for (const g of groups) drawGroup(ctx, g);
 
   // paper grain, clipped to the card
   const pattern = ctx.createPattern(noiseTile(), "repeat");
@@ -125,11 +128,11 @@ export function downloadBlob(blob: Blob, filename: string) {
 }
 
 /**
- * Share the image file with the native share sheet when possible (and wanted),
+ * Share the file (a picture or a video) with the native share sheet when possible (and wanted),
  * otherwise download it.
  */
 export async function shareOrDownload(blob: Blob, filename: string, text?: string, share = true) {
-  const file = new File([blob], filename, { type: "image/png" });
+  const file = new File([blob], filename, { type: blob.type || "image/png" });
   const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
   if (share && nav.canShare?.({ files: [file] })) {
     try {

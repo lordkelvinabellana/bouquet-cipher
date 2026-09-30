@@ -1,0 +1,99 @@
+.panel {
+  --fg: var(--on-slate);
+  --muted: var(--on-slate-muted);
+  --line: rgb(244 234 215 / 0.35);
+  --chip: rgb(244 234 215 / 0.14);
+  flex-basis: 100%;
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--fg);
+  text-align: left;
+}
+
+.panel[data-tone="cream"] {
+  --fg: var(--on-cream);
+  --muted: var(--on-cream-muted);
+  --line: rgb(59 58 54 / 0.2);
+  --chip: rgb(46 74 94 / 0.1);
+}
+
+.title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
+.choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.choice label {
+  position: relative;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+}
+
+.choice label[data-on] {
+  background: var(--chip);
+  border-color: var(--fg);
+}
+
+.choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.choice label:has(input:focus-visible) {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 2px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--chip);
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left;
+  transition: transform 200ms linear;
+}
+
+.problem {
+  margin: 0;
+  min-height: 1em;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.problem:empty {
+  display: none;
+}
