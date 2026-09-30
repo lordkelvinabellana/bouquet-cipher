@@ -7,6 +7,7 @@ import { dayIn, isMonthsary, monthsBetween, ordinal, parseDay, yearsAndMonths } 
  *   NICKNAMES        her nicknames, separated by | ("Mah Lervle|Poruper|Poruper-sang")
  *   FROM_NAME        who it's from, to sign the note ("Kel")
  *   GATE_HINT        an optional hint shown under the secret word
+ *   GATE_ANY_ANSWER  on: any answer opens the gate (a playful gate, see lib/gate.ts)
  *   TOGETHER_SINCE   the day you got together (YYYY-MM-DD), for "months together"
  *   MONTHSARY_WORD   what you call a monthsary ("Monthsarudle"; default "monthsary")
  *   MONTHSARY_LINE   the line under the monthsary greeting (optional)
@@ -57,6 +58,7 @@ export function gateCopy(random = Math.random) {
     text: n ? "This garden only opens for you." : "The flowers here are only for one person. Say the secret word to come in.",
     label: "The secret word",
     hint: PERSONAL.hint,
+    welcome: n ? `You got it, ${n} ❤` : "You got it ❤",
   };
 }
 

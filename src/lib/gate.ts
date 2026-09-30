@@ -13,7 +13,13 @@ export const GATE_COOKIE = "bc-gate";
 /** Remembered for a year: she shouldn't have to type it every time. */
 export const GATE_MAX_AGE = 60 * 60 * 24 * 365;
 
-export const gateEnabled = () => Boolean(process.env.SITE_PASSPHRASE?.trim());
+/**
+ * GATE_ANY_ANSWER=on makes it a playful gate: any answer that isn't empty is "right" (with
+ * an open-ended hint, whatever she thinks of is the answer). It keeps no one out.
+ */
+export const anyAnswer = () => /^(1|on|true|yes)$/i.test(process.env.GATE_ANY_ANSWER?.trim() ?? "");
+
+export const gateEnabled = () => anyAnswer() || Boolean(process.env.SITE_PASSPHRASE?.trim());
 
 /** Answers match however they're typed: "Our Café!" is "our cafe". */
 export function normalizeAnswer(s: string): string {
@@ -48,6 +54,7 @@ export async function isGateOpen(cookie: string | undefined): Promise<boolean> {
 }
 
 export async function passphraseMatches(attempt: string): Promise<boolean> {
+  if (anyAnswer()) return normalizeAnswer(attempt).length > 0;
   const want = normalizeAnswer(process.env.SITE_PASSPHRASE ?? "");
   return !!want && timingSafeEqual(await hmac(serverSecret(), normalizeAnswer(attempt)), await hmac(serverSecret(), want));
 }

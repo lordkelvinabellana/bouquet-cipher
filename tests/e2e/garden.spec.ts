@@ -4,7 +4,8 @@ import { expect, test, type Page } from "@playwright/test";
 // The private garden's features, when they're switched on in .env.local.
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 const on = (v: string | undefined, fallback: boolean) => (v?.trim() ? !/^(0|off|false|no)$/i.test(v.trim()) : fallback);
-const GATED = !!process.env.SITE_PASSPHRASE?.trim();
+const ANY_ANSWER = on(process.env.GATE_ANY_ANSWER, false);
+const GATED = ANY_ANSWER || !!process.env.SITE_PASSPHRASE?.trim();
 const ACCOUNTS = on(process.env.NEXT_PUBLIC_FEATURE_ACCOUNTS, true);
 const STATS = on(process.env.NEXT_PUBLIC_FEATURE_STATS, true);
 const GARDEN = on(process.env.NEXT_PUBLIC_FEATURE_GARDEN, false);
@@ -36,12 +37,24 @@ test.describe("the gate", () => {
   test("asks for the secret word, once", async ({ page }) => {
     await page.goto("/create");
     await expect(page).toHaveURL(/\/gate\?next=%2Fcreate/);
-    await page.getByLabel("The secret word", { exact: true }).fill("definitely not it");
-    await page.getByRole("button", { name: "Open the gate" }).click();
-    await expect(page.getByText("That's not it. Try again?")).toBeVisible();
-    // capitals and spaces don't matter
-    await page.getByLabel("The secret word", { exact: true }).fill(`  ${process.env.SITE_PASSPHRASE!.toUpperCase()} `);
-    await page.getByRole("button", { name: "Open the gate" }).click();
+    const word = page.getByLabel("The secret word", { exact: true });
+    const open = page.getByRole("button", { name: "Open the gate" });
+    // nothing at all never opens it
+    await word.fill("   ");
+    await expect(open).toBeDisabled();
+    if (ANY_ANSWER) {
+      // a playful gate: whatever she thinks of is right
+      await word.fill("sunflowers");
+      await open.click();
+      await expect(page.getByText(/You got it/)).toBeVisible();
+    } else {
+      await word.fill("definitely not it");
+      await open.click();
+      await expect(page.getByText("That's not it. Try again?")).toBeVisible();
+      // capitals and spaces don't matter
+      await word.fill(`  ${process.env.SITE_PASSPHRASE!.toUpperCase()} `);
+      await open.click();
+    }
     await expect(page).toHaveURL(/\/create$/);
     await page.goto("/");
     await expect(page).toHaveURL(/\/$/);
@@ -66,7 +79,7 @@ test("a bouquet link outside the gate shows the gate, with its preview intact", 
   expect(img.headers()["content-type"]).toBe("image/png");
   const page = await outside.newPage();
   await page.goto(`/b/${id}`);
-  await page.getByLabel("The secret word", { exact: true }).fill(process.env.SITE_PASSPHRASE!);
+  await page.getByLabel("The secret word", { exact: true }).fill(ANY_ANSWER ? "anything at all" : process.env.SITE_PASSPHRASE!);
   await page.getByRole("button", { name: "Open the gate" }).click();
   await expect(page.getByRole("button", { name: "Unwrap it" })).toBeVisible({ timeout: 10_000 });
   await outside.close();

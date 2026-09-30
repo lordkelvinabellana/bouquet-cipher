@@ -10,8 +10,8 @@ export default async function openGate(config: FullConfig) {
   mkdirSync(".playwright", { recursive: true });
   const baseURL = config.projects[0].use.baseURL ?? "http://localhost:3000";
   const ctx = await request.newContext({ baseURL });
-  if (process.env.SITE_PASSPHRASE) {
-    const res = await ctx.post("/api/gate", { data: { passphrase: process.env.SITE_PASSPHRASE } });
+  if (process.env.SITE_PASSPHRASE || /^(1|on|true|yes)$/i.test(process.env.GATE_ANY_ANSWER ?? "")) {
+    const res = await ctx.post("/api/gate", { data: { passphrase: process.env.SITE_PASSPHRASE || "the tests" } });
     if (!res.ok()) throw new Error(`Couldn't open the gate for the tests (${res.status()}).`);
   }
   await ctx.storageState({ path: GATE_STATE });

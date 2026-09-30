@@ -37,6 +37,16 @@ describe("the private garden's gate and locks", () => {
     expect(await answerMatches("the library", a)).toBe(false);
   });
 
+  it("as a playful gate, takes any answer that isn't empty", async () => {
+    process.env.GATE_ANY_ANSWER = "on";
+    expect(await passphraseMatches("the day we met")).toBe(true);
+    expect(await passphraseMatches("x")).toBe(true);
+    expect(await passphraseMatches("   ")).toBe(false);
+    expect(await passphraseMatches("?!")).toBe(false);
+    delete process.env.GATE_ANY_ANSWER;
+    expect(await passphraseMatches("the day we met")).toBe(false);
+  });
+
   it("opens one locked bouquet, not the others", async () => {
     const t = await unlockToken("ABCDE12345");
     expect(await isUnlocked("ABCDE12345", t)).toBe(true);

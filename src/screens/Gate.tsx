@@ -19,6 +19,7 @@ export function Gate({
   endpoint,
   paper = 1,
   button = "Open the gate",
+  welcome = null,
 }: {
   /** Where to go once it's open (the gate page); omit to reload this page (a locked bouquet). */
   next?: string;
@@ -29,6 +30,8 @@ export function Gate({
   endpoint: string;
   paper?: number;
   button?: string;
+  /** Shown for a moment once the answer is right, before going in. */
+  welcome?: string | null;
 }) {
   const router = useRouter();
   const buds = useMemo(() => budsBouquet(), []);
@@ -36,6 +39,7 @@ export function Gate({
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState("");
   const [shake, setShake] = useState(0);
+  const [welcomed, setWelcomed] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +52,10 @@ export function Gate({
       body: JSON.stringify({ passphrase: answer, answer }),
     }).catch(() => null);
     if (res?.ok) {
+      if (welcome) {
+        setWelcomed(true);
+        await new Promise((r) => setTimeout(r, 1400));
+      }
       if (next) router.replace(next);
       router.refresh();
       return;
@@ -100,8 +108,8 @@ export function Gate({
               {busy ? "One moment…" : button}
             </button>
           </form>
-          <p className={styles.problem} role="status" aria-live="polite">
-            {problem}
+          <p className={welcomed ? styles.welcome : styles.problem} role="status" aria-live="polite">
+            {welcomed ? welcome : problem}
           </p>
         </section>
       </div>

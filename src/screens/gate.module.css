@@ -166,3 +166,13 @@
     animation: none;
   }
 }
+
+/* the right answer: a moment of "you got it" before the garden opens */
+.welcome {
+  min-height: 1.3em;
+  margin: 12px 0 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 28px;
+  color: #f7c6d4;
+  animation: settle 0.5s var(--ease-out) both;
+}
