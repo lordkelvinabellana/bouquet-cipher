@@ -2,6 +2,7 @@
 import { useState } from "react";
 import type { Cipher } from "@/core/cipher";
 import type { BouquetLayout } from "@/core/layout/v1/layout";
+import { track } from "@/lib/track";
 import { downloadBlob } from "@/render/canvas/exportPng";
 import type { VideoFile } from "@/render/canvas/exportVideo";
 import styles from "./video.module.css";
@@ -42,6 +43,7 @@ export function VideoMaker({
   const [open, setOpen] = useState(false);
   const [reveal, setReveal] = useState(revealByDefault);
   const [state, setState] = useState<State>({ at: "idle" });
+  const code = url.match(/\/b\/([0-9A-Z]{10})/)?.[1];
 
   // a new choice needs a new video
   const choose = (next: boolean) => {
@@ -58,6 +60,7 @@ export function VideoMaker({
         (done) => setState({ at: "making", done }),
       );
       setState({ at: "ready", file });
+      track("video_make", { reveal, sender: !revealByDefault, format: file.filename.split(".").pop() ?? "" }, code);
     } catch (err) {
       setState({ at: "failed", why: err instanceof Error && err.message ? err.message : "The video couldn’t be made. Please try again." });
     }
@@ -69,6 +72,7 @@ export function VideoMaker({
 
   const share = async () => {
     if (!shareFile || !nav) return;
+    track("video_share", { reveal, how: "share" }, code);
     try {
       await nav.share({ files: [shareFile], text: reveal ? `Every flower is a letter. ${url}` : `Can you read it? Every flower is a letter. ${url}?solve` });
     } catch (err) {
@@ -109,7 +113,10 @@ export function VideoMaker({
                 Share video…
               </button>
             ) : null}
-            <button type="button" className={buttonClass} onClick={() => downloadBlob(state.file.blob, state.file.filename)}>
+            <button type="button" className={buttonClass} onClick={() => {
+                track("video_share", { reveal, how: "save" }, code);
+                downloadBlob(state.file.blob, state.file.filename);
+              }}>
               Save video
             </button>
           </>

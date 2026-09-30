@@ -7,6 +7,7 @@ import "server-only";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { TrackedEvent } from "@/lib/events";
 import { newBouquetId, type BouquetKind, type NewBouquet } from "./validate";
 
 export interface StoredBouquet {
@@ -70,6 +71,27 @@ export interface BouquetStore {
   /** Mark an inbox item read (only its recipient can). */
   markRead(userId: string, bouquetId: string): Promise<void>;
   unread(userId: string): Promise<number>;
+
+  /** Count one event (see lib/events.ts). `dev` marks local and preview traffic. */
+  track(e: TrackedEvent, dev: boolean): Promise<void>;
+  /** Per event since a moment: how many, and from how many browser tabs. */
+  eventCounts(since: Date, dev: boolean): Promise<EventCount[]>;
+  /** Daily counts of some events. */
+  eventDaily(since: Date, names: readonly string[], dev: boolean, timeZone: string): Promise<EventDay[]>;
+  /** How one event splits by one of its flags. */
+  eventBreakdown(since: Date, name: string, key: string, dev: boolean): Promise<{ value: string; total: number }[]>;
+}
+
+export interface EventCount {
+  name: string;
+  total: number;
+  sessions: number;
+}
+
+export interface EventDay {
+  day: string;
+  name: string;
+  total: number;
 }
 
 /** How many of each list a gallery shows. */
@@ -224,6 +246,33 @@ class SupabaseStore implements BouquetStore {
     if (error) this.fail("mark it read", error);
   }
 
+  async track(e: TrackedEvent, dev: boolean): Promise<void> {
+    const { error } = await this.db.from("events").insert({ name: e.name, session: e.session, bouquet_id: e.bouquet, props: e.props, dev });
+    if (error) this.fail("count the event", error);
+  }
+
+  async eventCounts(since: Date, dev: boolean): Promise<EventCount[]> {
+    const { data, error } = await this.db.rpc("event_counts", { p_since: since.toISOString(), p_dev: dev });
+    if (error) this.fail("load the numbers", error);
+    return (data as { name: string; total: number | string; sessions: number | string }[]).map((r) => ({
+      name: r.name,
+      total: Number(r.total),
+      sessions: Number(r.sessions),
+    }));
+  }
+
+  async eventDaily(since: Date, names: readonly string[], dev: boolean, timeZone: string): Promise<EventDay[]> {
+    const { data, error } = await this.db.rpc("event_daily", { p_since: since.toISOString(), p_names: names, p_dev: dev, p_tz: timeZone });
+    if (error) this.fail("load the daily numbers", error);
+    return (data as { day: string; name: string; total: number | string }[]).map((r) => ({ day: r.day, name: r.name, total: Number(r.total) }));
+  }
+
+  async eventBreakdown(since: Date, name: string, key: string, dev: boolean) {
+    const { data, error } = await this.db.rpc("event_breakdown", { p_since: since.toISOString(), p_name: name, p_key: key, p_dev: dev });
+    if (error) this.fail("load the breakdown", error);
+    return (data as { value: string; total: number | string }[]).map((r) => ({ value: r.value, total: Number(r.total) }));
+  }
+
   async unread(userId: string): Promise<number> {
     const { count, error } = await this.db
       .from("bouquets")
@@ -311,6 +360,17 @@ class DevFileStore implements BouquetStore {
   async markRead() {}
   async unread() {
     return 0;
+  }
+  // No analytics without Supabase either.
+  async track() {}
+  async eventCounts() {
+    return [];
+  }
+  async eventDaily() {
+    return [];
+  }
+  async eventBreakdown() {
+    return [];
   }
 }
 

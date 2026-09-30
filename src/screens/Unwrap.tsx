@@ -21,6 +21,7 @@ import { cameraMatrix, presentedCamera, sceneGroups } from "@/core/scene/scene";
 import { apply } from "@/core/art/geom";
 import { clock, puzzleOf } from "@/core/puzzle";
 import { flyLetter, type Point } from "@/render/fly";
+import { track, useTrackOnce } from "@/lib/track";
 import { exportPng, shareOrDownload } from "@/render/canvas/exportPng";
 import { LiveBouquet } from "@/render/svg/LiveBouquet";
 import { AccountLink } from "@/components/AccountLink";
@@ -75,6 +76,7 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
 
   const [phase, setPhase] = useState<Phase>("arrive");
   useSeen(code, viewer);
+  useTrackOnce("open", { kind: "bouquet", signedIn: viewer.signedIn, solve }, code);
   const [read, setRead] = useState(0);
   const [paused, setPaused] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -83,6 +85,13 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
   const [puzzleGlow, setPuzzleGlow] = useState<string | null>(null);
   const [result, setResult] = useState<PuzzleResult | null>(null);
   const [scoreShared, setScoreShared] = useState(false);
+  // reaching the end, once, whichever way they got there
+  const counted = useRef(false);
+  useEffect(() => {
+    if (phase !== "read" || counted.current) return;
+    counted.current = true;
+    track("read", { puzzle: result !== null }, code);
+  }, [phase, result, code]);
   const slots = useMemo(() => puzzleOf(layout, cipher), [layout, cipher]);
   const cardRef = useRef<HTMLDivElement>(null);
   const letterRef = useRef<HTMLParagraphElement>(null);
@@ -126,14 +135,17 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
   const unwrap = useCallback(() => setPhase((p) => (p === "arrive" ? "unwrapping" : p)), []);
   const onUnwrapped = useCallback(() => setPhase((p) => (p === "unwrapping" ? (wantPuzzle ? "puzzle" : "envelope") : p)), [wantPuzzle]);
   const startPuzzle = () => {
+    track("puzzle_start", undefined, code);
     setWantPuzzle(true);
     setPhase((p) => (p === "arrive" ? "unwrapping" : p === "envelope" ? "puzzle" : p));
   };
   const onSolved = useCallback((r: PuzzleResult) => {
+    track("puzzle_solved", { guesses: r.guesses, misses: r.misses, seconds: Math.round(r.ms / 1000) }, code);
     setResult(r);
     setPhase("read");
-  }, []);
+  }, [code]);
   const giveUp = () => {
+    track("puzzle_give_up", { guessed: 0 }, code);
     setPuzzleGlow(null);
     setRead(0);
     setPhase("reading");
