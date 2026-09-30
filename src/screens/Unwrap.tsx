@@ -10,7 +10,7 @@
  *   read       the whole message, signed, with ways to reply
  */
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { FRAME, sealShapes } from "@/core/art/scenery";
 import { parseSealStyle } from "@/core/art/seal";
@@ -19,16 +19,19 @@ import { cipherOf, growBouquet, ribbonSeedOf, sealOf } from "@/core/bouquet";
 import { readingSequence, stepPause } from "@/core/reveal/sequence";
 import { cameraMatrix, presentedCamera, sceneGroups } from "@/core/scene/scene";
 import { apply } from "@/core/art/geom";
+import { clock, puzzleOf } from "@/core/puzzle";
+import { flyLetter, type Point } from "@/render/fly";
 import { exportPng, shareOrDownload } from "@/render/canvas/exportPng";
 import { LiveBouquet } from "@/render/svg/LiveBouquet";
 import { AccountLink } from "@/components/AccountLink";
 import { VideoMaker } from "@/components/VideoMaker";
 import { Paths } from "@/render/svg/Paths";
 import { Inked, LINGER, useAutoAdvance } from "./letter";
+import { Puzzle, type PuzzleResult } from "./Puzzle";
 import { ReplyActions, type Viewer } from "./Reply";
 import styles from "./unwrap.module.css";
 
-type Phase = "arrive" | "unwrapping" | "envelope" | "opening" | "reading" | "read";
+type Phase = "arrive" | "unwrapping" | "envelope" | "opening" | "reading" | "read" | "puzzle";
 
 export interface UnwrapProps {
   code: string;
@@ -46,6 +49,8 @@ export interface UnwrapProps {
   /** Who's looking, and whether its sender can be answered in their inbox. */
   viewer: Viewer;
   replyable: boolean;
+  /** Start with "decode it yourself". */
+  solve?: boolean;
 }
 
 /** Reading pace, a touch quicker than the composer's reveal so longer notes don't drag. */
@@ -58,7 +63,7 @@ export function useSeen(code: string, viewer: Viewer) {
   }, [code, viewer.signedIn, viewer.own]);
 }
 
-export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, sealStyle, toName, fromName, viewer, replyable }: UnwrapProps) {
+export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, sealStyle, toName, fromName, viewer, replyable, solve = false }: UnwrapProps) {
   const reduced = useReducedMotion() ?? false;
   const cipher = useMemo(() => cipherOf(cipherKey), [cipherKey]);
   const layout = useMemo(() => growBouquet(message, cipher, salt), [message, cipher, salt]);
@@ -73,6 +78,32 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
   const [read, setRead] = useState(0);
   const [paused, setPaused] = useState(false);
   const [saving, setSaving] = useState(false);
+  // "decode it yourself": once the paper is off, the puzzle instead of the envelope
+  const [wantPuzzle, setWantPuzzle] = useState(solve);
+  const [puzzleGlow, setPuzzleGlow] = useState<string | null>(null);
+  const [result, setResult] = useState<PuzzleResult | null>(null);
+  const [scoreShared, setScoreShared] = useState(false);
+  const slots = useMemo(() => puzzleOf(layout, cipher), [layout, cipher]);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const letterRef = useRef<HTMLParagraphElement>(null);
+  const focusOf = useMemo(() => new Map(layout.elements.map((e) => [e.key, e.focus])), [layout]);
+  // each reading step's place among the note's letters (spaces aren't drawn as letters)
+  const inkIndex = useMemo(() => {
+    let n = 0;
+    return steps.map((s) => (s.kind === "element" ? n++ : -1));
+  }, [steps]);
+
+  /** A flower's centre on screen. */
+  const flowerAt = useCallback(
+    (key: string): Point | null => {
+      const f = focusOf.get(key);
+      const box = cardRef.current?.getBoundingClientRect();
+      if (!f || !box) return null;
+      const [x, y] = apply(cameraMatrix(camera), f);
+      return { x: box.left + (x / FRAME.w) * box.width, y: box.top + (y / FRAME.h) * box.height };
+    },
+    [focusOf, camera],
+  );
 
   // The flap lifts, the letter slides out, then the writing starts.
   useEffect(() => {
@@ -93,7 +124,20 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
   }, [phase, paused, read, steps, reduced]);
 
   const unwrap = useCallback(() => setPhase((p) => (p === "arrive" ? "unwrapping" : p)), []);
-  const onUnwrapped = useCallback(() => setPhase((p) => (p === "unwrapping" ? "envelope" : p)), []);
+  const onUnwrapped = useCallback(() => setPhase((p) => (p === "unwrapping" ? (wantPuzzle ? "puzzle" : "envelope") : p)), [wantPuzzle]);
+  const startPuzzle = () => {
+    setWantPuzzle(true);
+    setPhase((p) => (p === "arrive" ? "unwrapping" : p === "envelope" ? "puzzle" : p));
+  };
+  const onSolved = useCallback((r: PuzzleResult) => {
+    setResult(r);
+    setPhase("read");
+  }, []);
+  const giveUp = () => {
+    setPuzzleGlow(null);
+    setRead(0);
+    setPhase("reading");
+  };
   const openEnvelope = useCallback(() => setPhase((p) => (p === "envelope" ? "opening" : p)), []);
   useAutoAdvance(phase === "arrive", reduced ? LINGER.arrive / 2 : LINGER.arrive, unwrap);
   useAutoAdvance(phase === "envelope", reduced ? LINGER.envelope / 2 : LINGER.envelope, openEnvelope);
@@ -104,13 +148,30 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
   };
 
   const current = phase === "reading" && read > 0 ? steps[read - 1] : undefined;
-  const glowKey = current?.kind === "element" ? current.key : null;
+  const glowKey = phase === "puzzle" ? puzzleGlow : current?.kind === "element" ? current.key : null;
   const written = phase === "read" ? steps.map((s) => s.char).join("") : steps.slice(0, read).map((s) => s.char).join("");
-  const chipAt = current?.kind === "element" ? apply(cameraMatrix(camera), [current.focus[0], current.focus[1] - current.r]) : null;
-  const chip =
-    current?.kind === "element" && chipAt
-      ? { left: (chipAt[0] / FRAME.w) * 100, top: (chipAt[1] / FRAME.h) * 100, char: current.char }
-      : null;
+
+  // the letter just read flies from its flower to its place in the note
+  useLayoutEffect(() => {
+    if (phase !== "reading" || reduced || read === 0) return;
+    const step = steps[read - 1];
+    if (step.kind !== "element") return;
+    const target = letterRef.current?.querySelector<HTMLElement>(`[data-i="${inkIndex[read - 1]}"]`);
+    const from = flowerAt(step.key);
+    if (target && from) flyLetter(step.char, from, target);
+  }, [phase, read, reduced, steps, inkIndex, flowerAt]);
+
+  const shareScore = async () => {
+    if (!result) return;
+    const text = `I decoded a secret bouquet${fromName ? ` from ${fromName}` : ""} in ${result.guesses} guesses (${clock(result.ms)}). Every flower is a letter. Make one: ${window.location.origin}`;
+    try {
+      if (typeof navigator.share === "function") await navigator.share({ text });
+      else await navigator.clipboard.writeText(text);
+      setScoreShared(true);
+    } catch {
+      // closed the share sheet
+    }
+  };
 
   const savePicture = async () => {
     setSaving(true);
@@ -127,7 +188,8 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
 
   const wrapped = phase === "arrive" || phase === "unwrapping";
   const letterVisible = !wrapped;
-  const heading = fromName ? `${fromName} sent you a bouquet` : "Someone sent you a bouquet";
+  const heading =
+    phase === "puzzle" ? "Can you read it?" : fromName ? `${fromName} sent you a bouquet` : "Someone sent you a bouquet";
 
   return (
     <main className={styles.page} data-phase={phase}>
@@ -137,14 +199,14 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
         </Link>
         <span className={styles.links}>
           <Link href="/alphabet" className={styles.link}>
-            How does this work?
+            How it works
           </Link>
           <AccountLink />
         </span>
       </header>
 
       <div className={styles.workspace}>
-        <div className={styles.cardBox}>
+        <div ref={cardRef} className={styles.cardBox}>
           <LiveBouquet
             layout={layout}
             seal={signature}
@@ -158,17 +220,16 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
             className={styles.card}
             label={phase === "read" ? `A bouquet that reads: ${message}` : "A bouquet with a hidden message"}
           />
-          {chip ? (
-            <span key={read} className={styles.chip} style={{ left: `${chip.left}%`, top: `${chip.top}%` }} aria-hidden>
-              {chip.char}
-            </span>
-          ) : null}
         </div>
         <div className={styles.side}>
           <section className={styles.intro} aria-live="polite">
             <h1 className={styles.heading}>{heading}</h1>
             <p className={styles.sub}>
-              {wrapped ? (
+              {phase === "puzzle" ? (
+                "Every flower is a letter. Guess them to fill in the note; the colours are clues."
+              ) : wrapped && wantPuzzle ? (
+                "Taking off the paper…"
+              ) : wrapped ? (
                 <>
                   {toName ? `For ${toName}. ` : ""}There’s a message hidden in these flowers. Let’s see what they say…
                 </>
@@ -181,7 +242,20 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
               )}
             </p>
           </section>
-          {letterVisible ? (
+          {phase === "puzzle" ? (
+            <div className={styles.letterArea}>
+              <Puzzle
+                slots={slots}
+                cipher={cipher}
+                toName={toName}
+                reduced={reduced}
+                flowerAt={flowerAt}
+                onFocusFlower={setPuzzleGlow}
+                onSolved={onSolved}
+                onGiveUp={giveUp}
+              />
+            </div>
+          ) : letterVisible ? (
             <div className={styles.letterArea}>
               {phase === "envelope" || phase === "opening" ? (
                 <button
@@ -206,7 +280,7 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
               ) : (
                 <article className={styles.letter} aria-label="The message">
                   {toName ? <p className={styles.dear}>Dear {toName},</p> : null}
-                  <p className={styles.note}>
+                  <p ref={letterRef} className={styles.note}>
                     <Inked text={written} />
                     {phase === "reading" ? <span className={styles.caret} aria-hidden /> : null}
                   </p>
@@ -226,6 +300,11 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                 Open the envelope
               </button>
             ) : null}
+            {(phase === "arrive" || phase === "envelope") && !wantPuzzle ? (
+              <button type="button" className={styles.ghost} onClick={startPuzzle}>
+                Decode it yourself
+              </button>
+            ) : null}
             {phase === "reading" ? (
               <>
                 <button type="button" className={styles.ghost} onClick={() => setPaused((p) => !p)}>
@@ -235,6 +314,17 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                   Show it all
                 </button>
               </>
+            ) : null}
+            {phase === "read" && result ? (
+              <p className={styles.score}>
+                <span>
+                  You decoded it in <b>{result.guesses}</b> {result.guesses === 1 ? "guess" : "guesses"}
+                  {result.misses ? `, ${result.misses} wrong` : ", not one wrong"} · {clock(result.ms)}
+                </span>
+                <button type="button" className={styles.ghost} onClick={shareScore}>
+                  {scoreShared ? "Shared" : "Share your score"}
+                </button>
+              </p>
             ) : null}
             {phase === "read" ? (
               <>

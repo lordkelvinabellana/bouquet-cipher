@@ -520,6 +520,28 @@
     --max-h: min(54dvh, 700px);
   }
 
+  /* wrapping and sending: keep the bouquet in view while choosing paper and names */
+  .page[data-wrapped] .card {
+    --max-h: min(44dvh, 560px);
+  }
+
+  /* the send buttons as an even grid, not a ragged row */
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .row > * {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .row > :only-child,
+  .row > section,
+  .row > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
   .starters {
     flex-wrap: nowrap;
     overflow-x: auto;

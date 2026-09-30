@@ -5,7 +5,7 @@ import { CardView } from "@/screens/CardView";
 import { Unwrap } from "@/screens/Unwrap";
 import { loadBouquet } from "@/server/load";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
@@ -23,8 +23,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function BouquetPage({ params }: Props) {
+export default async function BouquetPage({ params, searchParams }: Props) {
   const { id } = await params;
+  // `?solve` opens straight into "decode it yourself"
+  const solve = (await searchParams)?.solve !== undefined;
   const b = await loadBouquet(id);
   if (!b) notFound();
   const user = await currentUser();
@@ -49,6 +51,7 @@ export default async function BouquetPage({ params }: Props) {
       fromName={b.fromName}
       viewer={viewer}
       replyable={replyable}
+      solve={solve}
     />
   );
 }

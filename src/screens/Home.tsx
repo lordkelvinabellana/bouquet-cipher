@@ -57,9 +57,8 @@ export function Home() {
         <p className={styles.brand}>Bouquet Cipher</p>
         <h1 className={styles.headline}>Say it with flowers.</h1>
         <p className={styles.body}>
-          Type a message and watch it grow into a hand-drawn bouquet. Every vowel becomes a flower, every consonant a leaf, every word a stem.
-          Each bouquet has its own secret key, so no two grow alike, even when they say the same thing. Wrap it up and send it: the
-          flowers keep your words until the person you send it to opens it here.
+          Type a message and watch it grow into a hand-drawn bouquet: every vowel a flower, every consonant a leaf, every word a stem.
+          Send it, and the flowers keep your words secret until they’re opened.
         </p>
         <div className={styles.buttons}>
           <Link href="/create" className={styles.primary}>

@@ -159,31 +159,6 @@
 }
 
 /* The letter lifting off the glowing flower. */
-.chip {
-  position: absolute;
-  transform: translate(-50%, -100%);
-  font-family: var(--font-hand), cursive;
-  font-size: clamp(18px, 8cqw, 40px);
-  color: #3a3833;
-  text-shadow: 0 0 8px rgb(255 248 225 / 0.95);
-  pointer-events: none;
-  animation: lift 0.5s ease-out both;
-}
-
-@keyframes lift {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -60%);
-  }
-  30% {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    transform: translate(-50%, -190%);
-  }
-}
-
 .letterArea {
   display: flex;
   justify-content: center;
@@ -567,17 +542,314 @@
   .envelope,
   .letter,
   .inked,
-  .signed,
-  .chip {
+  .signed {
     animation: none;
-  }
-  .chip {
-    display: none;
   }
   .envLetter,
   .envFlap,
   .envSeal,
   .cardBox {
     transition: none;
+  }
+}
+
+/* ——— decode it yourself ——— */
+
+.puzzle {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.puzzleNote {
+  line-height: 40px;
+}
+
+/* a hidden letter: a blank coloured like the flower or leaf it hides in */
+.slot {
+  display: inline-block;
+  min-width: 0.7em;
+  margin: 0 1px;
+  padding: 0 1px;
+  border: 0;
+  border-bottom: 3px solid var(--clue);
+  background: color-mix(in srgb, var(--clue) 26%, transparent);
+  font: inherit;
+  line-height: 1.1;
+  color: inherit;
+  text-align: center;
+  vertical-align: baseline;
+  cursor: default;
+  transition: background-color 200ms var(--ease-out);
+}
+
+.slot[data-open] {
+  background: transparent;
+  border-bottom-color: color-mix(in srgb, var(--clue) 45%, transparent);
+}
+
+.slot > span {
+  display: inline-block;
+}
+
+.slot:focus-visible {
+  outline: 2px solid var(--clue);
+  outline-offset: 2px;
+}
+
+.given {
+  color: #5b564c;
+}
+
+.puzzleStats {
+  margin: 0;
+  font-size: 14px;
+  color: var(--on-slate-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.clues {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--on-slate);
+}
+
+.clues li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clues b {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.clueMark {
+  width: 12px;
+  height: 12px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--clue);
+  transform: rotate(-45deg);
+}
+
+.keys {
+  display: grid;
+  gap: 6px;
+  width: min(100%, 440px);
+}
+
+.keyRow {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.key {
+  flex: 1 1 0;
+  max-width: 40px;
+  height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: rgb(251 239 214 / 0.9);
+  color: var(--ink);
+  font: 600 16px var(--font-serif), Georgia, serif;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 120ms var(--ease-out),
+    background-color 200ms var(--ease-out),
+    opacity 200ms var(--ease-out);
+}
+
+.key:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.key[data-state="hit"] {
+  background: #9ec79a;
+  color: #24402a;
+}
+
+.key[data-state="miss"] {
+  background: rgb(251 239 214 / 0.18);
+  color: var(--on-slate-muted);
+  text-decoration: line-through;
+}
+
+.key:disabled {
+  cursor: default;
+}
+
+.key[data-shake] {
+  animation: nope 320ms var(--ease-out);
+}
+
+@keyframes nope {
+  20%,
+  60% {
+    translate: -4px 0;
+  }
+  40%,
+  80% {
+    translate: 4px 0;
+  }
+}
+
+.key:focus-visible,
+.textButton:focus-visible {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 2px;
+}
+
+.textButton {
+  border: 0;
+  background: none;
+  padding: 6px 4px;
+  font-size: 14px;
+  color: var(--on-slate-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.score {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 14px;
+  margin: 0 0 4px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgb(158 199 154 / 0.18);
+  color: var(--on-slate);
+  font-size: 15px;
+  animation: fadeUp 0.6s ease-out both;
+}
+
+@media (min-width: 860px) {
+  .puzzle {
+    justify-items: start;
+  }
+  .clues,
+  .keyRow,
+  .score {
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .key[data-shake],
+  .score {
+    animation: none;
+  }
+}
+
+/* ——— phones: bouquet, letter and buttons on one screen ——— */
+@media (max-width: 859px) {
+  .page {
+    padding: 12px 16px 24px;
+    gap: 6px;
+  }
+
+  .brand {
+    font-size: 25px;
+    white-space: nowrap;
+  }
+
+  .heading {
+    font-size: clamp(30px, 8.6vw, 40px);
+  }
+
+  .sub {
+    min-height: 0;
+    font-size: 15px;
+    text-wrap: balance;
+  }
+
+  .workspace {
+    gap: 12px;
+  }
+
+  /* once it's open, the bouquet makes room for the letter and the buttons */
+  .page:not([data-phase="arrive"]):not([data-phase="unwrapping"]) .cardBox {
+    width: min(100%, calc(min(38dvh, 560px) * 2 / 3));
+  }
+
+  /* guessing needs room for the note, the clues and the keys */
+  .page[data-phase="puzzle"]:not([data-phase="arrive"]):not([data-phase="unwrapping"]) .cardBox {
+    width: min(100%, calc(min(32dvh, 420px) * 2 / 3));
+  }
+
+  .page[data-phase="puzzle"] .workspace {
+    gap: 10px;
+  }
+
+  .page[data-phase="puzzle"] .letter {
+    min-height: 0;
+  }
+
+  .puzzle {
+    gap: 8px;
+  }
+
+  .letterArea {
+    width: 100%;
+  }
+
+  .letter {
+    width: min(380px, 100%);
+    min-height: 140px;
+    padding: 14px 20px 14px;
+    background: repeating-linear-gradient(#fffbf1 0 29px, rgb(165 123 82 / 0.22) 29px 30px) #fffbf1;
+    background-position: 0 12px;
+    transform: rotate(-1deg);
+  }
+
+  .dear,
+  .note,
+  .signed {
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  .note {
+    min-height: 60px;
+  }
+
+  .puzzleNote {
+    line-height: 36px;
+  }
+
+  .actions {
+    gap: 8px;
+  }
+
+  .primary,
+  .ghost {
+    padding: 11px 18px;
+  }
+
+  .keys {
+    gap: 5px;
+  }
+
+  .keyRow {
+    gap: 4px;
+  }
+
+  .key {
+    height: 42px;
+    font-size: 15px;
   }
 }

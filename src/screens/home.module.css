@@ -196,8 +196,22 @@
 }
 
 @media (max-width: 859px) {
+  .page {
+    padding: 16px 16px 24px;
+    align-content: start;
+  }
   .words {
     text-align: center;
+    padding-top: 28px;
+  }
+  .headline {
+    font-size: clamp(46px, 13vw, 64px);
+    margin-bottom: 10px;
+  }
+  .body {
+    font-size: 16px;
+    margin-bottom: 18px;
+    text-wrap: pretty;
   }
   .buttons,
   .steps {
