@@ -11,8 +11,21 @@
   --on-cream: #3b3a36;
   --on-cream-muted: #6b6251;
   --accent: #e98e72;
-  /* strong ease-out for UI responses */
+  /*
+   * One motion system for the whole app (src/anim/motion.ts mirrors it for code):
+   *   ease-out     things arriving or answering a touch: fast start, soft landing
+   *   ease-in-out  things moving from one place to another on screen
+   *   ease-in      things leaving
+   * and five speeds, from a button press to a whole scene.
+   */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --dur-press: 160ms;
+  --dur-quick: 260ms;
+  --dur-base: 480ms;
+  --dur-slow: 720ms;
+  --dur-scene: 900ms;
 }
 
 ::selection {
@@ -22,7 +35,7 @@
 
 /* Every pressable thing answers the press (component styles can override). */
 :where(button, a[class]) {
-  transition: transform 160ms var(--ease-out);
+  transition: transform var(--dur-press) var(--ease-out);
 }
 
 :where(button:not(:disabled), a[class]):active {

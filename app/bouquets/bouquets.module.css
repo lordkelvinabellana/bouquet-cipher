@@ -161,7 +161,7 @@
   aspect-ratio: 360 / 516;
   border-radius: 12px;
   background: rgb(0 0 0 / 0.15);
-  transition: transform 0.15s ease;
+  transition: transform var(--dur-press) var(--ease-out);
 }
 
 .item:hover .thumb {

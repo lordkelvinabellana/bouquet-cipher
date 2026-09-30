@@ -26,7 +26,7 @@
 
 .words {
   max-width: 480px;
-  animation: rise 0.8s ease-out both;
+  animation: rise var(--dur-slow) var(--ease-out) both;
 }
 
 .brand {
@@ -146,7 +146,7 @@
   justify-items: center;
   gap: 10px;
   width: 100%;
-  animation: rise 0.9s 0.1s ease-out both;
+  animation: rise var(--dur-scene) var(--ease-out) 0.1s both;
 }
 
 .card {
