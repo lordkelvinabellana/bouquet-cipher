@@ -1,4 +1,4 @@
-import { cipherOf, growBouquet, ribbonSeedOf, sealOf } from "@/core/bouquet";
+import { budsBouquet, cipherOf, growBouquet, ribbonSeedOf, sealOf } from "@/core/bouquet";
 import { compose, IDENTITY, scale, translate, type Pt } from "@/core/art/geom";
 import { PAPER } from "@/core/art/palette";
 import { sealShapes } from "@/core/art/scenery";
@@ -48,4 +48,18 @@ export function cardPreviewSvg(seal: number, sealStyle: string | null = null): s
     { m: IDENTITY, shapes: [{ d: path([corner(0.08, 1.06), corner(0.92, 1.06), corner(0.92, 1.075), corner(0.08, 1.075)]), fill: PAPER.stitch, opacity: 0.35 }] },
   ];
   return toSvgString(groups, { viewBox: "0 20 600 860", grain: true });
+}
+
+/** A bouquet still waiting for its answer: the stand-in bouquet in its own paper, with its sender's seal. */
+export function budsPreviewSvg(paper = 0, seal: number | null = null, sealStyle: string | null = null): string {
+  const buds = budsBouquet();
+  const groups = sceneGroups(buds.layout, { seal: seal ?? buds.seal, ribbonSeed: buds.ribbonSeed, paper, sealStyle });
+  return toSvgString(groups, { viewBox: "0 20 600 860", grain: true });
+}
+
+/** The picture for a stored bouquet: a card's envelope, a locked bouquet's buds, or the flowers. */
+export function previewSvgFor(b: { kind: string; message: string; salt: number; paper: number; cipherKey: string | null; seal: number | null; sealStyle: string | null; lockHash: string | null }): string {
+  if (b.kind === "card") return cardPreviewSvg(b.seal ?? 0, b.sealStyle);
+  if (b.lockHash) return budsPreviewSvg(b.paper, b.seal, b.sealStyle);
+  return bouquetPreviewSvg(b);
 }

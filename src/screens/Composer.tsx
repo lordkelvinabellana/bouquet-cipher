@@ -16,6 +16,10 @@ import { useGardenInput } from "@/input/useGardenInput";
 import { exportPng, shareOrDownload } from "@/render/canvas/exportPng";
 import { VideoMaker } from "@/components/VideoMaker";
 import { sessionId, track, useTrackOnce } from "@/lib/track";
+import { FLAGS } from "@/lib/flags";
+import { shrinkPhoto } from "@/lib/photo";
+import { useToday } from "@/lib/today";
+import { monthsaryOf, ordinal, parseDay } from "@/core/together";
 import { useSignatureSeal } from "@/identity/signature";
 import { AccountLink } from "@/components/AccountLink";
 import { LiveBouquet } from "@/render/svg/LiveBouquet";
@@ -70,6 +74,24 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
   const [fromName, setFromName] = useState(account?.name ?? "");
   const [shared, setShared] = useState<{ url: string; code: string; delivered: boolean } | null>(null);
   const [error, setError] = useState("");
+  // a photo tucked in with the letter, and a question it waits behind (both optional)
+  const [photo, setPhoto] = useState<{ blob: Blob; url: string } | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [locked, setLocked] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  // the garden: which month this letter is for (null: this month)
+  const today = useToday(FLAGS.garden);
+  const [month, setMonth] = useState<number | null>(null);
+  const since = today?.since ? parseDay(today.since) : null;
+  // the private garden signs every bouquet with your name for each other, unless you change it
+  const signed = useRef(false);
+  useEffect(() => {
+    if (signed.current || !today?.from) return;
+    signed.current = true;
+    setFromName((f) => f || today.from!);
+  }, [today]);
+  const months = today?.months ?? null;
   const [copied, setCopied] = useState(false);
   const [savingImage, setSavingImage] = useState(false);
   const [shaking, setShaking] = useState(false);
@@ -124,14 +146,59 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
     setPhase("wrap");
   };
 
+  const choosePhoto = async (file: File | undefined) => {
+    if (!file) return;
+    setPhotoBusy(true);
+    setError("");
+    try {
+      const blob = await shrinkPhoto(file);
+      setPhoto((old) => {
+        if (old) URL.revokeObjectURL(old.url);
+        return { blob, url: URL.createObjectURL(blob) };
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "That photo couldn’t be read. Try another?");
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const removePhoto = () =>
+    setPhoto((old) => {
+      if (old) URL.revokeObjectURL(old.url);
+      return null;
+    });
+
   const createLink = async () => {
+    if (locked && (!question.trim() || !answer.trim())) {
+      setError("Add the question and its answer, or turn the lock off.");
+      return;
+    }
     setPhase("saving");
     setError("");
     try {
+      let photoName: string | null = null;
+      if (photo) {
+        const up = await fetch("/api/photos", { method: "POST", headers: { "content-type": "image/jpeg" }, body: photo.blob });
+        const got = (await up.json().catch(() => ({}))) as { name?: string; error?: string };
+        if (!up.ok || !got.name) throw new Error(got.error ?? "The photo couldn't be kept. Please try again.");
+        photoName = got.name;
+      }
       const res = await fetch("/api/bouquets", {
         method: "POST",
         headers: { "content-type": "application/json", "x-bc-session": sessionId() },
-        body: JSON.stringify({ message: final, key, seal: mySeal, paper, toName: toName || null, fromName: fromName || null, replyTo }),
+        body: JSON.stringify({
+          message: final,
+          key,
+          seal: mySeal,
+          paper,
+          toName: toName || null,
+          fromName: fromName || null,
+          replyTo,
+          photo: photoName,
+          lock: locked ? { question, answer } : null,
+          month,
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as { id?: string; error?: string; delivered?: boolean };
       if (!res.ok || !data.id) throw new Error(data.error ?? "The bouquet couldn't be saved. Please try again.");
@@ -333,12 +400,98 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
                       <Link className={styles.inlineLink} href="/bouquets#seal">
                         Change your seal
                       </Link>
-                    ) : (
+                    ) : FLAGS.accounts ? (
                       <Link className={styles.inlineLink} href={`/login?next=${encodeURIComponent("/bouquets#seal")}`}>
                         Sign in to design your own seal
                       </Link>
-                    )}
+                    ) : null}
                   </div>
+                </div>
+              ) : null}
+
+              {FLAGS.garden && since && months !== null && months > 0 ? (
+                <div className={styles.step}>
+                  <h3 className={styles.stepTitle}>Plant it in our garden</h3>
+                  <p className={styles.stepText}>Making one for another month? It grows in that month’s row.</p>
+                  <label className={styles.field}>
+                    <span>For</span>
+                    <select
+                      className={styles.select}
+                      value={month ?? months}
+                      onChange={(e) => setMonth(Number(e.target.value) === months ? null : Number(e.target.value))}
+                      disabled={phase === "saving"}
+                    >
+                      {Array.from({ length: months + 1 }, (_, i) => months - i).map((m) => {
+                        const d = monthsaryOf(since, m);
+                        const when = new Date(Date.UTC(d.y, d.m - 1, d.d)).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+                        return (
+                          <option key={m} value={m}>
+                            {m === 0 ? "Our first month" : `Our ${ordinal(m)} ${today!.word}`}
+                            {m === months ? " (this one)" : ""} · {when}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </label>
+                </div>
+              ) : null}
+
+              {FLAGS.photos ? (
+                <div className={`${styles.step} ${styles.photoStep}`}>
+                  <div>
+                    <h3 className={styles.stepTitle}>Tuck in a photo</h3>
+                    <p className={styles.stepText}>Optional. It slides out of the envelope once the flowers are read.</p>
+                    <div className={styles.photoActions}>
+                      <label className={styles.ghost} aria-disabled={photoBusy || phase === "saving"}>
+                        {photoBusy ? "Getting it ready…" : photo ? "Choose another" : "Choose a photo"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className={styles.srOnly}
+                          onChange={(e) => {
+                            void choosePhoto(e.target.files?.[0]);
+                            e.target.value = "";
+                          }}
+                          disabled={photoBusy || phase === "saving"}
+                        />
+                      </label>
+                      {photo ? (
+                        <button type="button" className={styles.textButton} onClick={removePhoto} disabled={phase === "saving"}>
+                          Remove
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                  {photo ? (
+                    // a local preview of the chosen photo
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photo.url} alt="The photo you chose" className={styles.photoThumb} />
+                  ) : null}
+                </div>
+              ) : null}
+
+              {FLAGS.locks ? (
+                <div className={styles.step}>
+                  <label className={styles.lockToggle}>
+                    <input type="checkbox" checked={locked} onChange={(e) => setLocked(e.target.checked)} disabled={phase === "saving"} />
+                    <span>
+                      <b className={styles.stepTitle}>Lock it with a question</b>
+                      <span className={styles.stepText}>Optional. The bouquet stays closed until they answer something only they’d know.</span>
+                    </span>
+                  </label>
+                  {locked ? (
+                    <>
+                      <label className={styles.field}>
+                        <span>Ask</span>
+                        <input value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Where was our first date?" maxLength={120} autoComplete="off" />
+                      </label>
+                      <label className={styles.field}>
+                        <span>Answer</span>
+                        <input value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="the answer" maxLength={60} autoComplete="off" />
+                      </label>
+                      <p className={styles.stepText}>Capitals, accents and punctuation don’t matter.</p>
+                    </>
+                  ) : null}
                 </div>
               ) : null}
 

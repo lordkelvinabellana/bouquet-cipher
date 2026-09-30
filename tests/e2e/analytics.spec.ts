@@ -23,10 +23,8 @@ async function eventsFor(session: string) {
   return data ?? [];
 }
 
-test.beforeEach(async ({ request }) => {
-  const me = (await (await request.get("/api/me")).json()) as { enabled: boolean };
-  test.skip(!me.enabled || !admin, "Analytics need Supabase keys in .env.local.");
-});
+const off = (v: string | undefined) => /^(0|off|false|no)$/i.test(v?.trim() ?? "");
+test.skip(!admin, "Analytics need Supabase keys in .env.local.");
 
 test.afterAll(async () => {
   if (sessions.length) await admin?.from("events").delete().in("session", sessions);
@@ -71,6 +69,7 @@ test("the composer counts its steps as you go", async ({ page }) => {
 test("the numbers are only for the site's owners", async ({ browser, page }, testInfo) => {
   // one owner account, so one browser at a time
   test.skip(testInfo.project.name !== "chromium", "Runs once, on desktop.");
+  test.skip(off(process.env.NEXT_PUBLIC_FEATURE_ACCOUNTS) || off(process.env.NEXT_PUBLIC_FEATURE_STATS), "Needs accounts and /stats switched on.");
   // signed out: off to sign in
   await page.goto("/stats");
   await expect(page).toHaveURL(/\/login/);

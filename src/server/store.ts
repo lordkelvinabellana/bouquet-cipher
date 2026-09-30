@@ -34,6 +34,15 @@ export interface StoredBouquet {
   readAt: string | null;
   /** The sender's seal style when it was sent (see core/art/seal.ts). */
   sealStyle: string | null;
+  /** Planted in "Our garden". */
+  garden: boolean;
+  /** The month of the garden it's planted in (null: the month it was made). */
+  month: number | null;
+  /** A photo tucked in with the letter. */
+  photo: string | null;
+  /** The secret question it waits behind, and the answer's salted hash (never sent to a browser). */
+  lockQuestion: string | null;
+  lockHash: string | null;
   createdAt: string;
 }
 
@@ -71,6 +80,12 @@ export interface BouquetStore {
   /** Mark an inbox item read (only its recipient can). */
   markRead(userId: string, bouquetId: string): Promise<void>;
   unread(userId: string): Promise<number>;
+
+  /** Every bouquet planted in "Our garden", oldest first: the live site's, or (`test`) the test runs'. */
+  garden(test: boolean): Promise<StoredBouquet[]>;
+  /** Keep a photo (JPEG bytes) under its name, and read it back. */
+  savePhoto(name: string, bytes: Uint8Array): Promise<void>;
+  photo(name: string): Promise<Uint8Array | null>;
 
   /** Count one event (see lib/events.ts). `dev` marks local and preview traffic. */
   track(e: TrackedEvent, dev: boolean): Promise<void>;
@@ -113,6 +128,12 @@ interface Row {
   reply_to: string | null;
   read_at: string | null;
   seal_style: string | null;
+  garden?: boolean | null;
+  photo?: string | null;
+  lock_question?: string | null;
+  lock_hash?: string | null;
+  test?: boolean | null;
+  month?: number | null;
   created_at: string;
 }
 
@@ -132,6 +153,11 @@ const fromRow = (r: Row): StoredBouquet => ({
   replyTo: r.reply_to ?? null,
   readAt: r.read_at ?? null,
   sealStyle: r.seal_style ?? null,
+  garden: r.garden ?? false,
+  month: r.month ?? null,
+  photo: r.photo ?? null,
+  lockQuestion: r.lock_question ?? null,
+  lockHash: r.lock_hash ?? null,
   createdAt: r.created_at,
 });
 
@@ -159,6 +185,12 @@ class SupabaseStore implements BouquetStore {
           from_name: b.fromName,
           reply_to: b.replyTo,
           seal_style: b.sealStyle ?? null,
+          garden: b.garden ?? false,
+          photo: b.photo ?? null,
+          lock_question: b.lockHash ? (b.lock?.question ?? null) : null,
+          lock_hash: b.lockHash ?? null,
+          test: b.test ?? false,
+          month: b.month ?? null,
           sender_id: to.senderId,
           recipient_id: to.recipientId,
         })
@@ -246,6 +278,29 @@ class SupabaseStore implements BouquetStore {
     if (error) this.fail("mark it read", error);
   }
 
+  async garden(test: boolean): Promise<StoredBouquet[]> {
+    const { data, error } = await this.db
+      .from("bouquets")
+      .select("*")
+      .eq("garden", true)
+      .eq("test", test)
+      .order("created_at", { ascending: true })
+      .limit(1000);
+    if (error) this.fail("load the garden", error);
+    return (data as Row[]).map(fromRow);
+  }
+
+  async savePhoto(name: string, bytes: Uint8Array): Promise<void> {
+    const { error } = await this.db.storage.from("photos").upload(name, bytes, { contentType: "image/jpeg", upsert: false });
+    if (error) this.fail("keep the photo", error);
+  }
+
+  async photo(name: string): Promise<Uint8Array | null> {
+    const { data, error } = await this.db.storage.from("photos").download(name);
+    if (error || !data) return null;
+    return new Uint8Array(await data.arrayBuffer());
+  }
+
   async track(e: TrackedEvent, dev: boolean): Promise<void> {
     const { error } = await this.db.from("events").insert({ name: e.name, session: e.session, bouquet_id: e.bouquet, props: e.props, dev });
     if (error) this.fail("count the event", error);
@@ -304,7 +359,21 @@ class DevFileStore implements BouquetStore {
       const all = await this.read();
       let id = newBouquetId();
       while (all[id]) id = newBouquetId();
-      const row: StoredBouquet = { id, ...b, ...to, sealStyle: b.sealStyle ?? null, readAt: null, alphabetV: 2, createdAt: new Date().toISOString() };
+      const { lock, lockHash, ...rest } = b;
+      const row: StoredBouquet = {
+        id,
+        ...rest,
+        ...to,
+        sealStyle: b.sealStyle ?? null,
+        garden: b.garden ?? false,
+        month: b.month ?? null,
+        photo: b.photo ?? null,
+        lockQuestion: lockHash ? (lock?.question ?? null) : null,
+        lockHash: lockHash ?? null,
+        readAt: null,
+        alphabetV: 2,
+        createdAt: new Date().toISOString(),
+      };
       all[id] = row;
       await fs.mkdir(path.dirname(this.file), { recursive: true });
       // write-then-rename, so a reader never sees a half-written file
@@ -331,6 +400,11 @@ class DevFileStore implements BouquetStore {
       replyTo: row.replyTo ?? null,
       readAt: row.readAt ?? null,
       sealStyle: row.sealStyle ?? null,
+      garden: row.garden ?? false,
+      month: row.month ?? null,
+      photo: row.photo ?? null,
+      lockQuestion: row.lockQuestion ?? null,
+      lockHash: row.lockHash ?? null,
     };
   }
 
@@ -360,6 +434,24 @@ class DevFileStore implements BouquetStore {
   async markRead() {}
   async unread() {
     return 0;
+  }
+  // (the file store is only ever local, so it's all test runs)
+  async garden(): Promise<StoredBouquet[]> {
+    return Object.values(await this.read())
+      .filter((b) => b.garden)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+  async savePhoto(name: string, bytes: Uint8Array): Promise<void> {
+    const dir = path.join(path.dirname(this.file), "photos");
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(path.join(dir, name), bytes);
+  }
+  async photo(name: string): Promise<Uint8Array | null> {
+    try {
+      return new Uint8Array(await fs.readFile(path.join(path.dirname(this.file), "photos", name)));
+    } catch {
+      return null;
+    }
   }
   // No analytics without Supabase either.
   async track() {}

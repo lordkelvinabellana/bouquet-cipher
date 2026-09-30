@@ -1,12 +1,35 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { FLAGS } from "@/lib/flags";
+import { GATE_COOKIE, gateEnabled, isGateOpen } from "@/lib/gate";
 import { authEnabled, SUPABASE_PUBLIC_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 
 /**
- * Keeps sign-in sessions fresh: before a page renders, an expired access token is
+ * Runs before every page and API route: switched-off features lead home, the private
+ * garden's gate is kept, and sign-in sessions are kept fresh: before a page renders, an expired access token is
  * swapped for a new one and the cookies are updated. Signed-out visits pass straight through.
  */
+/** With accounts off, their pages simply lead home. */
+const ACCOUNT_PAGES = /^\/(login|reset|bouquets|auth)(\/|$)/;
+
+/**
+ * Open to everyone even when the garden is private: the gate itself, counting, and the
+ * link-preview pictures chat apps fetch. Bouquet pages decide for themselves, so they can
+ * keep their preview tags while showing the gate in place of the flowers.
+ */
+const OUTSIDE_THE_GATE = /^\/(gate|api\/gate|api\/events|api\/me|opengraph-image|b\/[0-9A-Z]{10}(\/opengraph-image)?|robots\.txt|manifest\.webmanifest|icon|apple-icon)(\/|$|\?)/;
+
 export async function proxy(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  if ((!FLAGS.accounts && ACCOUNT_PAGES.test(path)) || (!FLAGS.stats && path.startsWith("/stats"))) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+  if (gateEnabled() && !OUTSIDE_THE_GATE.test(path) && !(await isGateOpen(request.cookies.get(GATE_COOKIE)?.value))) {
+    if (path.startsWith("/api/")) return NextResponse.json({ error: "This garden is private." }, { status: 401 });
+    const gate = new URL("/gate", request.url);
+    gate.searchParams.set("next", path + request.nextUrl.search);
+    return NextResponse.redirect(gate);
+  }
   if (!authEnabled() || !request.cookies.getAll().some((c) => c.name.startsWith("sb-"))) return NextResponse.next();
   let response = NextResponse.next({ request });
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY, {

@@ -22,8 +22,20 @@ describe("validateNewBouquet", () => {
         toName: "Sam",
         fromName: null,
         replyTo: null,
+        photo: null,
+        lock: null,
+        month: null,
       },
     });
+  });
+
+  it("takes an optional photo and a question to lock it behind", () => {
+    const ok = validateNewBouquet({ message: "hi", photo: "a".repeat(24) + ".jpg", lock: { question: " Our song?\n", answer: " Yellow " } });
+    expect(ok).toMatchObject({ ok: true, value: { photo: "a".repeat(24) + ".jpg", lock: { question: "Our song?", answer: "Yellow" } } });
+    expect(validateNewBouquet({ message: "hi", photo: "../secrets.jpg" }).ok).toBe(false);
+    expect(validateNewBouquet({ message: "hi", lock: { question: "", answer: "x" } }).ok).toBe(false);
+    expect(validateNewBouquet({ message: "hi", lock: { question: "Why?", answer: "" } }).ok).toBe(false);
+    expect(validateNewBouquet({ message: "hi", lock: { question: "Why?", answer: "x".repeat(61) } }).ok).toBe(false);
   });
 
   it("keeps the sender's key and seal, and makes a key when there isn't one", () => {

@@ -853,3 +853,64 @@
     font-size: 15px;
   }
 }
+
+/* ——— a photo tucked in with the letter ——— */
+
+.letterArea:has(.photo) {
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.photo {
+  margin: 0;
+  width: min(260px, 72%);
+  padding: 10px 10px 34px;
+  background: #fffdf7;
+  border-radius: 4px;
+  box-shadow: 0 14px 30px rgb(0 0 0 / 0.32);
+  transform: rotate(2.5deg);
+  animation: tuckOut 0.9s var(--ease-out) 0.35s both;
+}
+
+.photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 2px;
+}
+
+@keyframes tuckOut {
+  from {
+    opacity: 0;
+    transform: translateY(-60px) rotate(-4deg) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(2.5deg);
+  }
+}
+
+@media (min-width: 860px) {
+  .letterArea:has(.photo) {
+    align-items: flex-start;
+  }
+  .photo {
+    margin-left: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo {
+    animation: none;
+  }
+}
+
+/* the private garden: which month this bouquet is for, above the heading */
+.occasion {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 24px;
+  line-height: 1.1;
+  color: #f7c6d4;
+}

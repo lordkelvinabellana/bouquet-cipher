@@ -52,6 +52,10 @@ export interface UnwrapProps {
   replyable: boolean;
   /** Start with "decode it yourself". */
   solve?: boolean;
+  /** A photo tucked in with the letter (its address), shown once the flowers are read. */
+  photo?: string | null;
+  /** In the private garden: her nickname, which month it's for, and the bouquet after it. */
+  personal?: { nickname: string | null; occasion: string | null; next: { id: string; title: string } | null } | null;
 }
 
 /** Reading pace, a touch quicker than the composer's reveal so longer notes don't drag. */
@@ -64,7 +68,7 @@ export function useSeen(code: string, viewer: Viewer) {
   }, [code, viewer.signedIn, viewer.own]);
 }
 
-export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, sealStyle, toName, fromName, viewer, replyable, solve = false }: UnwrapProps) {
+export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, sealStyle, toName, fromName, viewer, replyable, solve = false, photo = null, personal = null }: UnwrapProps) {
   const reduced = useReducedMotion() ?? false;
   const cipher = useMemo(() => cipherOf(cipherKey), [cipherKey]);
   const layout = useMemo(() => growBouquet(message, cipher, salt), [message, cipher, salt]);
@@ -198,10 +202,23 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
     }
   };
 
+  // Share: a clean picture of the wrapped bouquet (the flowers, never the words) to the phone's share sheet
+  const [sharing, setSharing] = useState(false);
+  const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+  const sharePicture = async () => {
+    setSharing(true);
+    track("picture_save", { share: true, from: "unwrap" }, code);
+    try {
+      const blob = await exportPng(sceneGroups(layout, { seal: signature, sealStyle, ribbonSeed, paper, present: true }));
+      await shareOrDownload(blob, "bouquet.png", fromName ? `A bouquet from ${fromName}. Every flower is a letter.` : "Every flower is a letter.");
+    } finally {
+      setSharing(false);
+    }
+  };
+
   const wrapped = phase === "arrive" || phase === "unwrapping";
   const letterVisible = !wrapped;
-  const heading =
-    phase === "puzzle" ? "Can you read it?" : fromName ? `${fromName} sent you a bouquet` : "Someone sent you a bouquet";
+  const heading = phase === "puzzle" ? "Can you read it?" : fromName ? `${fromName} sent you a bouquet` : "Someone sent you a bouquet";
 
   return (
     <main className={styles.page} data-phase={phase}>
@@ -235,6 +252,7 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
         </div>
         <div className={styles.side}>
           <section className={styles.intro} aria-live="polite">
+            {personal?.occasion && phase !== "puzzle" ? <p className={styles.occasion}>{personal.occasion}</p> : null}
             <h1 className={styles.heading}>{heading}</h1>
             <p className={styles.sub}>
               {phase === "puzzle" ? (
@@ -243,7 +261,9 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                 "Taking off the paper…"
               ) : wrapped ? (
                 <>
-                  {toName ? `For ${toName}. ` : ""}There’s a message hidden in these flowers. Let’s see what they say…
+                  {personal?.nickname
+                    ? `${personal.nickname}, there’s a message hidden in these flowers${fromName ? ` from ${fromName}` : ""}. Let’s see what they say…`
+                    : `${toName ? `For ${toName}. ` : ""}There’s a message hidden in these flowers. Let’s see what they say…`}
                 </>
               ) : phase === "envelope" ? (
                 "A little card was tucked inside…"
@@ -299,6 +319,13 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                   {phase === "read" && fromName ? <p className={styles.signed}>{fromName}</p> : null}
                 </article>
               )}
+              {phase === "read" && photo ? (
+                <figure className={styles.photo}>
+                  {/* the sender's own photo, served privately; not worth next/image */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photo} alt="A photo tucked in with the letter" />
+                </figure>
+              ) : null}
             </div>
           ) : null}
           <div className={styles.actions}>
@@ -340,12 +367,25 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
             ) : null}
             {phase === "read" ? (
               <>
+                {canShare ? (
+                  <button type="button" className={styles.primary} onClick={sharePicture} disabled={sharing}>
+                    {sharing ? "Getting it ready…" : "Share"}
+                  </button>
+                ) : null}
+                {personal?.next ? (
+                  <Link className={styles.primary} href={`/b/${personal.next.id}`}>
+                    Next: {personal.next.title}
+                  </Link>
+                ) : null}
                 <button type="button" className={styles.ghost} onClick={readAgain}>
                   Read again
                 </button>
-                <button type="button" className={styles.ghost} onClick={savePicture} disabled={saving}>
-                  {saving ? "Saving…" : "Save picture"}
-                </button>
+                {/* where the phone can share, Share covers saving too */}
+                {!canShare ? (
+                  <button type="button" className={styles.ghost} onClick={savePicture} disabled={saving}>
+                    {saving ? "Saving…" : "Save picture"}
+                  </button>
+                ) : null}
                 <VideoMaker
                   layout={layout}
                   cipher={cipher}
@@ -359,6 +399,11 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                   buttonClass={styles.ghost}
                 />
                 <ReplyActions code={code} fromName={fromName} viewer={viewer} replyable={replyable} />
+                {personal ? (
+                  <Link className={styles.ghost} href="/garden">
+                    Back to our garden
+                  </Link>
+                ) : null}
               </>
             ) : null}
           </div>

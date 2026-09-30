@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ID_PATTERN } from "@/core/code";
 import { newCipherKey } from "@/core/cipher";
+import { FLAGS } from "@/lib/flags";
 import { currentUser } from "@/lib/supabase/server";
 import { Composer } from "@/screens/Composer";
 import { getStore } from "@/server/store";
@@ -22,7 +23,7 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
   let replyTo: string | null = null;
   if (typeof reply === "string" && ID_PATTERN.test(reply)) {
     const original = await store.get(reply);
-    if (original?.senderId) {
+    if (original?.senderId && FLAGS.accounts) {
       if (!user) redirect(`/login?next=${encodeURIComponent(`/create?reply=${reply}`)}`);
       replyTo = original.id;
       initialTo = original.fromName ?? initialTo;

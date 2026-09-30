@@ -1,0 +1,178 @@
+.page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 16px 32px;
+  gap: 8px;
+}
+
+.top {
+  width: 100%;
+  max-width: 1040px;
+}
+
+.brand {
+  font-family: var(--font-hand), cursive;
+  font-size: 26px;
+  color: var(--on-slate);
+  text-decoration: none;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 960px;
+}
+
+.card {
+  display: block;
+  width: min(100%, calc(min(44dvh, 560px) * 2 / 3));
+  height: auto;
+  animation: settle 0.9s var(--ease-out) both;
+}
+
+.panel {
+  width: min(100%, 380px);
+  text-align: center;
+}
+
+.heading {
+  margin: 0 0 6px;
+  font-family: var(--font-hand), cursive;
+  font-weight: 400;
+  font-size: clamp(34px, 8vw, 46px);
+  line-height: 1.05;
+  color: var(--cream);
+  text-wrap: balance;
+}
+
+.text {
+  margin: 0 0 16px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--on-slate-muted);
+  text-wrap: pretty;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+}
+
+.form[data-shake] {
+  animation: nope 360ms var(--ease-out);
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--on-slate-muted);
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgb(244 234 215 / 0.35);
+  border-radius: 12px;
+  background: rgb(251 239 214 / 0.08);
+  color: var(--cream);
+  font: 26px/1.2 var(--font-hand), cursive;
+  text-align: center;
+  outline: none;
+  transition: border-color 160ms var(--ease-out), background-color 160ms var(--ease-out);
+}
+
+.input:focus {
+  border-color: var(--cream);
+  background: rgb(251 239 214 / 0.14);
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--on-slate-muted);
+  font-style: italic;
+}
+
+.primary {
+  padding: 13px 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.primary:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.primary:focus-visible {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 2px;
+}
+
+.problem {
+  min-height: 1.3em;
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: #f3b3a0;
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+}
+
+@keyframes nope {
+  20%,
+  60% {
+    translate: -6px 0;
+  }
+  40%,
+  80% {
+    translate: 6px 0;
+  }
+}
+
+@media (min-width: 860px) {
+  .body {
+    flex-direction: row;
+    gap: 56px;
+  }
+  .card {
+    width: min(100%, calc(min(78dvh, 820px) * 2 / 3));
+  }
+  .panel {
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .form[data-shake] {
+    animation: none;
+  }
+}
+
+/* the right answer: a moment of "you got it" before the garden opens */
+.welcome {
+  min-height: 1.3em;
+  margin: 12px 0 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 28px;
+  color: #f7c6d4;
+  animation: settle 0.5s var(--ease-out) both;
+}

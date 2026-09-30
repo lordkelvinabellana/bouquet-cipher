@@ -1,24 +1,17 @@
 import { after, NextResponse, type NextRequest } from "next/server";
 import { currentUser } from "@/lib/supabase/server";
 import { isBot } from "@/lib/events";
-import { recordEvent } from "@/server/analytics";
+import { FLAGS } from "@/lib/flags";
+import { hashAnswer, normalizeAnswer } from "@/lib/gate";
+import { isDevTraffic, recordEvent } from "@/server/analytics";
 import { getStore, type Addressing } from "@/server/store";
 import { warmLinkPreview } from "@/server/warm";
+import { clientIp, hashIp } from "@/server/ip";
 import { validateNewBouquet } from "@/server/validate";
 
 /** Bouquets one address may create per 10 minutes (development is roomier, for test runs). */
 const RATE_LIMIT = process.env.NODE_ENV === "production" ? 30 : 1000;
 const MAX_BODY = 8 * 1024;
-
-async function hashIp(ip: string): Promise<string> {
-  const data = new TextEncoder().encode(`${process.env.RATE_LIMIT_SALT ?? "bouquet-cipher"}:${ip}`);
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", data));
-  return Array.from(digest.slice(0, 16), (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function clientIp(req: NextRequest): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
-}
 
 export async function POST(req: NextRequest) {
   const text = await req.text();
@@ -48,8 +41,21 @@ export async function POST(req: NextRequest) {
       const me = await store.profile(user.id);
       if (me) value = { ...value, seal: me.seal, sealStyle: me.sealStyle, fromName: value.fromName ?? me.displayName };
     }
+    // Private-garden extras, each only when it's switched on.
+    value = {
+      ...value,
+      garden: FLAGS.garden,
+      month: FLAGS.garden ? value.month : null,
+      test: isDevTraffic(),
+      photo: FLAGS.photos ? value.photo : null,
+      lock: FLAGS.locks ? value.lock : null,
+    };
+    if (value.lock) {
+      if (!normalizeAnswer(value.lock.answer)) return NextResponse.json({ error: "The answer needs a letter or a number in it." }, { status: 400 });
+      value = { ...value, lockHash: await hashAnswer(value.lock.answer) };
+    }
     // A reply goes straight to the original sender's inbox, if they have an account.
-    if (value.replyTo) {
+    if (value.replyTo && FLAGS.accounts) {
       const original = await store.get(value.replyTo);
       if (!original) return NextResponse.json({ error: "The bouquet you're replying to has wilted." }, { status: 400 });
       if (original.senderId && !user) return NextResponse.json({ error: "Sign in to reply to their inbox." }, { status: 401 });
