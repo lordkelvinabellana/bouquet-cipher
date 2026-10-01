@@ -52,7 +52,7 @@ export function Home() {
   const layout = useMemo(() => growBouquet(canon(typed, "live"), cipher), [typed, cipher]);
 
   useTrackOnce("home_view");
-  // the private garden greets her by one of her nicknames, and on a monthsary, properly
+  // the private garden greets her by one of her nicknames
   const today = useToday(FLAGS.garden);
   return (
     <main className={styles.page}>
@@ -60,21 +60,12 @@ export function Home() {
         <AccountLink />
       </div>
       <section className={styles.words}>
-        <p className={styles.brand}>{today?.nickname && !today.greeting ? `Hi, ${today.nickname}` : "Bouquet Cipher"}</p>
-        {today?.greeting ? (
-          <>
-            <h1 className={`${styles.headline} ${styles.celebrate}`}>{today.greeting.title}</h1>
-            <p className={styles.body}>{today.greeting.line}</p>
-          </>
-        ) : (
-          <>
-            <h1 className={styles.headline}>Say it with flowers.</h1>
-            <p className={styles.body}>
-              Type a message and watch it grow into a hand-drawn bouquet: every vowel a flower, every consonant a leaf, every word a stem.
-              Send it, and the flowers keep your words secret until they’re opened.
-            </p>
-          </>
-        )}
+        <p className={styles.brand}>{today?.nickname ? `Hi, ${today.nickname}` : "Bouquet Cipher"}</p>
+        <h1 className={styles.headline}>Say it with flowers.</h1>
+        <p className={styles.body}>
+          Type a message and watch it grow into a hand-drawn bouquet: every vowel a flower, every consonant a leaf, every word a stem.
+          Send it, and the flowers keep your words secret until they’re opened.
+        </p>
         <div className={styles.buttons}>
           <Link href="/create" className={styles.primary}>
             Create a bouquet

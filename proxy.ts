@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { FLAGS } from "@/lib/flags";
 import { GATE_COOKIE, gateEnabled, isGateOpen } from "@/lib/gate";
+import { specialPath } from "@/server/personal";
 import { authEnabled, SUPABASE_PUBLIC_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 
 /**
@@ -30,6 +31,8 @@ export async function proxy(request: NextRequest) {
     gate.searchParams.set("next", path + request.nextUrl.search);
     return NextResponse.redirect(gate);
   }
+  // the special link (e.g. /for-april) opens on the greeting, past the gate
+  if (FLAGS.garden && path === specialPath()) return NextResponse.rewrite(new URL("/greeting", request.url));
   if (!authEnabled() || !request.cookies.getAll().some((c) => c.name.startsWith("sb-"))) return NextResponse.next();
   let response = NextResponse.next({ request });
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY, {

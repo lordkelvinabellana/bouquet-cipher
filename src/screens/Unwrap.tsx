@@ -346,6 +346,13 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={photo} alt="A photo tucked in with the letter" />
                 </figure>
+              ) : phase === "read" && personal ? (
+                // in the private garden, every bouquet has room for a photo; until it's added, a soft stand-in
+                <figure className={styles.photo} aria-label="A photo is coming">
+                  <span className={styles.photoPlaceholder}>
+                    <span aria-hidden>❤</span>a photo of us
+                  </span>
+                </figure>
               ) : null}
             </div>
           ) : null}
