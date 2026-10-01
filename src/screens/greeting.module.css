@@ -1,0 +1,189 @@
+.page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px 40px;
+  overflow: hidden;
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  width: min(100%, 720px);
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-weight: 400;
+  font-size: clamp(44px, 9vw, 80px);
+  line-height: 1.02;
+  color: #f7c6d4;
+  text-wrap: balance;
+}
+
+.line {
+  max-width: 34ch;
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(22px, 4.4vw, 30px);
+  line-height: 1.25;
+  color: var(--cream);
+  text-wrap: pretty;
+}
+
+/* things arrive in order: rise and fade in, each on its own beat */
+.in {
+  animation: rise var(--dur-slow) var(--ease-out) both;
+}
+
+.drop {
+  animation: drop var(--dur-scene) var(--ease-out) both;
+}
+
+.page[data-hurry] .in,
+.page[data-hurry] .drop {
+  animation-duration: var(--dur-base);
+}
+
+.photos {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: clamp(190px, 44vw, 260px);
+  margin: 8px 0 4px;
+}
+
+.photo {
+  position: absolute;
+  top: 0;
+  width: clamp(130px, 30vw, 180px);
+  margin: 0;
+  padding: 8px 8px 30px;
+  background: #fffdf7;
+  border-radius: 4px;
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.34);
+  --rest: rotate(0deg);
+  transform: var(--rest);
+}
+
+.photo[data-i="0"] {
+  --rest: translateX(-62%) rotate(-7deg);
+}
+
+.photo[data-i="1"] {
+  --rest: translateY(-4%) rotate(2deg);
+  z-index: 1;
+}
+
+.photo[data-i="2"] {
+  --rest: translateX(62%) rotate(8deg);
+}
+
+.photo img,
+.placeholder {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.placeholder {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  background: linear-gradient(160deg, #f6e3d6, #efcfd8 55%, #e3d3ea);
+  font-family: var(--font-hand), cursive;
+  font-size: 18px;
+  color: #8a5a66;
+}
+
+.heart {
+  font-size: 22px;
+  line-height: 1;
+  color: #d9709a;
+}
+
+.note {
+  width: min(460px, 100%);
+  padding: 20px 24px 16px;
+  border-radius: 10px;
+  background: repeating-linear-gradient(#fffbf1 0 31px, rgb(165 123 82 / 0.2) 31px 32px) #fffbf1;
+  background-position: 0 16px;
+  color: #3a3833;
+  text-align: left;
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.34);
+  rotate: -1deg;
+}
+
+.noteText {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 24px;
+  line-height: 32px;
+  white-space: pre-line;
+  text-wrap: pretty;
+}
+
+.from {
+  margin: 4px 0 0;
+  text-align: right;
+  font-family: var(--font-hand), cursive;
+  font-size: 24px;
+  color: #5b564c;
+}
+
+.enter {
+  margin-top: 6px;
+  padding: 14px 30px;
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 17px;
+  text-decoration: none;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .enter:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.enter:focus-visible {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 3px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+  }
+}
+
+/* a photo drops onto the table and settles at its own angle */
+@keyframes drop {
+  from {
+    opacity: 0;
+    transform: var(--rest) translateY(-40px) scale(1.08) rotate(-6deg);
+  }
+  to {
+    opacity: 1;
+    transform: var(--rest);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .in,
+  .drop {
+    animation: none;
+  }
+}

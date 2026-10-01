@@ -119,3 +119,26 @@ export function monthOf(b: { month: number | null; createdAt: string }): number 
   if (!since) return null;
   return b.month ?? Math.max(0, monthsBetween(since, dayIn(PERSONAL.timeZone, new Date(b.createdAt))));
 }
+
+/** The special link's address: "/for-april" (from FOR_NAME, or FOR_SLUG). */
+export function specialPath(): string | null {
+  const slug = (process.env.FOR_SLUG?.trim() || PERSONAL.name || "")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return slug ? `/for-${slug}` : null;
+}
+
+/** The greeting for the latest Monthsarudle (whatever day it is), with its line and note. */
+export function latestGreeting(): { months: number; title: string; line: string; note: { from: string | null; text: string } | null } | null {
+  const t = today();
+  if (t.months === null || t.months < 1) return null;
+  return {
+    months: t.months,
+    title: `Happy ${ordinal(t.months)} ${PERSONAL.word}${t.nickname ? `, ${t.nickname}` : ""}`,
+    line: PERSONAL.line ?? `${yearsAndMonths(t.months)} of us, and I'd choose you in every single one of them.`,
+    note: PERSONAL.note ? { from: PERSONAL.from, text: PERSONAL.note } : null,
+  };
+}

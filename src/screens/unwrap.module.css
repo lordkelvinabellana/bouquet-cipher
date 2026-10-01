@@ -914,3 +914,21 @@
   line-height: 1.1;
   color: #f7c6d4;
 }
+
+.photoPlaceholder {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  aspect-ratio: 4 / 5;
+  border-radius: 2px;
+  background: linear-gradient(160deg, #f6e3d6, #efcfd8 55%, #e3d3ea);
+  font-family: var(--font-hand), cursive;
+  font-size: 20px;
+  color: #8a5a66;
+}
+
+.photoPlaceholder > span {
+  font-size: 24px;
+  color: #d9709a;
+}

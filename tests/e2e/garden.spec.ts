@@ -199,3 +199,24 @@ test("a garden bouquet opens as that month's, and leads on to the next", async (
   // the next bouquet in the garden (another test's may be in between, so any next one will do)
   await expect(page.getByRole("link", { name: /^Next: Our/ })).toBeVisible();
 });
+
+test("the special link: the gate, then the greeting, then our garden", async ({ browser }, testInfo) => {
+  test.skip(!GARDEN || !process.env.TOGETHER_SINCE || !process.env.FOR_NAME, "The garden, its date or her name is off.");
+  const path = `/for-${process.env.FOR_NAME!.trim().toLowerCase()}`;
+  const word = process.env.MONTHSARY_WORD?.trim() || "monthsary";
+  const visitor = await browser.newContext({ baseURL: testInfo.project.use.baseURL, storageState: { cookies: [], origins: [] } });
+  const page = await visitor.newPage();
+  await page.goto(path);
+  if (GATED) {
+    await expect(page).toHaveURL(new RegExp(`/gate\\?next=${encodeURIComponent(path)}`));
+    await page.getByLabel("The secret word", { exact: true }).fill(ANY_ANSWER ? "us" : process.env.SITE_PASSPHRASE!);
+    await page.getByRole("button", { name: "Open the gate" }).click();
+  }
+  await expect(page).toHaveURL(new RegExp(`${path}$`));
+  await expect(page.getByRole("heading", { name: new RegExp(`Happy \\d+(st|nd|rd|th) ${word}`, "i") })).toBeVisible({ timeout: 10_000 });
+  // photos not added yet show a soft stand-in
+  await expect(page.getByText("a photo of us").first()).toBeVisible();
+  await page.getByRole("link", { name: "Enter our garden" }).click();
+  await expect(page.getByRole("heading", { name: "Our garden" })).toBeVisible();
+  await visitor.close();
+});

@@ -6,6 +6,10 @@
   pointer-events: none;
 }
 
+.petals[data-behind] {
+  z-index: 0;
+}
+
 .petals span {
   position: absolute;
   top: -40px;

@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Caveat, Fraunces } from "next/font/google";
-import { Celebration } from "@/components/Celebration";
-import { FLAGS } from "@/lib/flags";
 import "./globals.css";
 
 const hand = Caveat({ subsets: ["latin"], variable: "--font-hand", display: "swap" });
@@ -37,11 +35,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${hand.variable} ${serif.variable}`}>
-      <body>
-        {children}
-        {/* the private garden's monthsary petals and note (fetched behind the gate) */}
-        {FLAGS.garden ? <Celebration /> : null}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
