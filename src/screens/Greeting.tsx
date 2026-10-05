@@ -21,10 +21,10 @@ export function Greeting({
   title: string;
   line: string;
   note: { from: string | null; text: string } | null;
-  photos: string[];
+  /** Each frame's photo, or null for a stand-in. */
+  photos: (string | null)[];
 }) {
   const [hurry, setHurry] = useState(false);
-  const [missing, setMissing] = useState<Record<number, true>>({});
   const beat = (s: number) => ({ animationDelay: hurry ? "0s" : `${s}s` }) as React.CSSProperties;
 
   // let a tap or a key bring everything in at once
@@ -47,15 +47,15 @@ export function Greeting({
 
         <div className={styles.photos}>
           {photos.map((src, i) => (
-            <figure key={src} className={`${styles.photo} ${styles.drop}`} data-i={i} style={beat(BEATS.photos + i * 0.35)}>
-              {missing[i] ? (
+            <figure key={i} className={`${styles.photo} ${styles.drop}`} data-i={i} style={beat(BEATS.photos + i * 0.35)}>
+              {!src ? (
                 <span className={styles.placeholder}>
                   <span aria-hidden className={styles.heart}>❤</span>a photo of us
                 </span>
               ) : (
                 // private photos, served behind the gate; not worth next/image
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={src} alt="" onError={() => setMissing((m) => ({ ...m, [i]: true }))} />
+                <img src={src} alt="" />
               )}
             </figure>
           ))}
