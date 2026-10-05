@@ -23,7 +23,7 @@ import {
   type Clue,
   type Slot,
 } from "@/core/puzzle";
-import { flyLetter, FLIGHT_MS, type Point } from "@/render/fly";
+import { CSS_EASE } from "@/anim/motion";
 import styles from "./unwrap.module.css";
 
 export interface PuzzleResult {
@@ -33,7 +33,9 @@ export interface PuzzleResult {
 }
 
 const ROWS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
-const STAGGER = 110;
+const STAGGER = 70;
+/** How long a letter takes to pop into its place. */
+const POP_MS = 380;
 const CLUE_NAME: Record<Clue, string> = {
   vowel: "Flower",
   sage: "Leaf",
@@ -46,7 +48,6 @@ export function Puzzle({
   cipher,
   toName,
   reduced,
-  flowerAt,
   onFocusFlower,
   onSolved,
   onGiveUp,
@@ -55,8 +56,6 @@ export function Puzzle({
   cipher: Cipher | null;
   toName: string | null;
   reduced: boolean;
-  /** Where a flower is on screen, for a letter to fly from. */
-  flowerAt: (key: string) => Point | null;
   /** Light up a flower on the bouquet (null to stop). */
   onFocusFlower: (key: string | null) => void;
   onSolved: (result: PuzzleResult) => void;
@@ -109,32 +108,33 @@ export function Puzzle({
         };
         setTimeout(
           () => onSolved(result),
-          reduced ? 400 : FLIGHT_MS + hits.length * STAGGER + 500,
+          reduced ? 400 : POP_MS + hits.length * STAGGER + 500,
         );
       }
     },
     [guessed, solved, slots, misses, started, onSolved, reduced],
   );
 
-  // each right guess flies from its flowers to its places in the note
+  // each right guess pops into all its places in the note, one after another,
+  // while its first flower lights up on the bouquet
   useLayoutEffect(() => {
     if (!landing || reduced) return;
     landing.slots.forEach((i, n) => {
-      const slot = slots[i];
-      const target = note.current?.querySelector<HTMLElement>(
-        `[data-slot="${i}"] > span`,
+      const target = note.current?.querySelector<HTMLElement>(`[data-slot="${i}"] > span`);
+      target?.animate(
+        [
+          { transform: "scale(0.3)", opacity: 0 },
+          { transform: "scale(1.25)", opacity: 1, offset: 0.55 },
+          { transform: "scale(1)", opacity: 1 },
+        ],
+        { duration: POP_MS, delay: n * STAGGER, easing: CSS_EASE.out, fill: "backwards" },
       );
-      const from = slot.kind === "letter" ? flowerAt(slot.key) : null;
-      if (target && from) flyLetter(slot.char, from, target, n * STAGGER);
     });
     const first = slots[landing.slots[0]];
     if (first?.kind === "letter") onFocusFlower(first.key);
-    const t = setTimeout(
-      () => onFocusFlower(null),
-      FLIGHT_MS + landing.slots.length * STAGGER,
-    );
+    const t = setTimeout(() => onFocusFlower(null), POP_MS + landing.slots.length * STAGGER + 300);
     return () => clearTimeout(t);
-  }, [landing, reduced, slots, flowerAt, onFocusFlower]);
+  }, [landing, reduced, slots, onFocusFlower]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

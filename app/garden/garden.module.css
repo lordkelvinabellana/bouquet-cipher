@@ -97,8 +97,9 @@
 
 .plants {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(46%, 170px), 1fr));
-  gap: 16px 14px;
+  grid-template-columns: repeat(auto-fill, minmax(min(30%, 150px), 1fr));
+  align-items: start;
+  gap: 18px 12px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -232,4 +233,22 @@
 
 .plants:empty {
   display: none;
+}
+
+/* a month still waiting for its bouquet, as a card in the grid */
+.plotCard {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  aspect-ratio: 180 / 258;
+  border: 1px dashed rgb(244 234 215 / 0.25);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--on-slate-muted);
+}
+
+.waiting {
+  display: grid;
+  gap: 8px;
 }

@@ -73,14 +73,14 @@ test("tapping skips ahead", async ({ page, request }) => {
   await expect(page.getByText("Reading the flowers")).toBeVisible({ timeout: 5_000 });
 });
 
-test("reading it out, each letter flies from its flower into the note", async ({ page, request }) => {
+test("reading it out, each letter pops up over its flower as the note types it", async ({ page, request }) => {
   const res = await request.post("/api/bouquets", { data: { message: "Hi there" } });
   const { id } = (await res.json()) as { id: string };
   await page.goto(`/b/${id}`);
   await page.getByRole("button", { name: "Unwrap it" }).click();
   await page.getByRole("button", { name: "Open the envelope" }).first().click({ timeout: 10_000 });
-  // a letter in the air, on its way to the note
-  await expect(page.locator("body > span[aria-hidden]").first()).toBeAttached({ timeout: 8_000 });
+  // a letter popping up over its flower
+  await expect(page.locator('[class*="chip"]').first()).toBeAttached({ timeout: 8_000 });
   await expect(page.getByLabel("The message")).toContainText("Hi there", { timeout: 15_000 });
 });
 

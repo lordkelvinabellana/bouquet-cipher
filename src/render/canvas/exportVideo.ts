@@ -11,7 +11,7 @@ import { cardShape, FRAME } from "@/core/art/scenery";
 import type { Cipher } from "@/core/cipher";
 import type { BouquetLayout } from "@/core/layout/v1/layout";
 import { cameraMatrix, sceneGroups } from "@/core/scene/scene";
-import { FLY, FPS, planVideo, POP, popScale, readingAt, sweepAt, type VideoPlan } from "@/core/video/timeline";
+import { LETTER_POP, FPS, planVideo, POP, popScale, readingAt, sweepAt, type VideoPlan } from "@/core/video/timeline";
 import { drawGroup, fontFamily, noiseTile } from "./exportPng";
 
 /** The video in logical units (the card frame is 600 wide), and its pixel scale. */
@@ -201,10 +201,10 @@ function makePainter(ctx: CanvasRenderingContext2D, input: VideoInput, plan: Vid
 
     // below the card: the message as it's read, or the question
     if (input.reveal) {
-      // letters that have landed are written; the ones in the air fly from their flowers
-      const landed = plan.reads.filter((r) => r.at + FLY <= t).length;
+      // the message types each letter as it's read, while the letter pops up over its flower
+      const typed = plan.reads.filter((r) => r.at <= t).length;
       const shown = new Map<number, number>();
-      for (let k = 0; k < landed; k++) {
+      for (let k = 0; k < typed; k++) {
         const at = landing[k];
         if (at) shown.set(at.line, Math.max(shown.get(at.line) ?? 0, at.upto));
       }
@@ -217,21 +217,17 @@ function makePainter(ctx: CanvasRenderingContext2D, input: VideoInput, plan: Vid
         const x = W / 2 - ctx.measureText(l).width / 2 + ctx.measureText(part).width / 2;
         text(ctx, part, x, textTop + i * message.lineHeight, `${message.size}px ${hand}`, ON_SLATE);
       });
-      plan.reads.forEach((r, k) => {
-        const u = (t - r.at) / FLY;
-        const to = landing[k];
-        if (u <= 0 || u >= 1 || r.step.kind !== "element" || !to) return;
-        const [fx, fy] = toVideo(apply(cam, r.step.focus) as [number, number]);
-        const e = u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2;
-        // up off the flower, then an arc down to its place
-        const lift = 40 + Math.abs(to.y - fy) * 0.12;
-        const x = fx + (to.x - fx) * e;
-        const y = fy + (to.y - fy) * e - Math.sin(Math.PI * e) * lift - (1 - e) * 16 * Math.min(1, u * 5);
-        const size = message.size * (1 + 0.55 * Math.sin(Math.PI * Math.min(1, u * 1.1)));
-        const melt = u > 0.85 ? 1 - (u - 0.85) / 0.15 : 1;
-        const a = Math.min(1, u * 6);
+      plan.reads.forEach((r) => {
+        const u = (t - r.at) / LETTER_POP;
+        if (u <= 0 || u >= 1 || r.step.kind !== "element") return;
+        const [fx, fy] = toVideo(apply(cam, [r.step.focus[0], r.step.focus[1] - r.step.r * 0.6]) as [number, number]);
+        // pop: grows past full size, settles, then drifts up and fades
+        const k = u < 0.3 ? 0.4 + (u / 0.3) * 0.72 : u < 0.55 ? 1.12 - ((u - 0.3) / 0.25) * 0.12 : 1;
+        const a = u < 0.3 ? u / 0.3 : u < 0.55 ? 1 : 1 - (u - 0.55) / 0.45;
+        const size = 40 * k;
+        const y = fy - (u < 0.55 ? 0 : ((u - 0.55) / 0.45) * 14 * CARD_AT.k);
         ctx.save();
-        ctx.globalAlpha = a * melt;
+        ctx.globalAlpha = a;
         ctx.fillStyle = "#FFF6DA";
         ctx.shadowColor = "rgba(0,0,0,0.3)";
         ctx.shadowBlur = 12;
@@ -239,10 +235,10 @@ function makePainter(ctx: CanvasRenderingContext2D, input: VideoInput, plan: Vid
         ctx.font = `${size}px ${hand}`;
         const w = Math.max(size * 0.62, ctx.measureText(r.step.char).width) + size * 0.5;
         ctx.beginPath();
-        ctx.roundRect(x - w / 2, y - size * 0.62, w, size * 1.2, size * 0.6);
+        ctx.roundRect(fx - w / 2, y - size * 0.62, w, size * 1.2, size * 0.6);
         ctx.fill();
         ctx.restore();
-        text(ctx, r.step.char, x, y, `${size}px ${hand}`, melt < 1 ? ON_SLATE : "#3A3833", a);
+        text(ctx, r.step.char, fx, y, `${size}px ${hand}`, "#3A3833", a);
       });
       if (input.fromName) {
         const a = clamp01((t - plan.outro) / 0.4);

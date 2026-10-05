@@ -14,6 +14,7 @@ export const metadata: Metadata = { title: "Our garden · Bouquet Cipher", robot
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const longDay = (d: Day) => `${MONTHS[d.m - 1]} ${d.d}, ${d.y}`;
 const shortDay = (d: Day) => `${MONTHS[d.m - 1].slice(0, 3)} ${d.d}`;
+const cardDay = (d: Day) => `${MONTHS[d.m - 1].slice(0, 3)} ${d.d}, ${d.y}`;
 
 interface Bed {
   key: string;
@@ -112,38 +113,40 @@ export default async function GardenPage() {
           </Link>
         </section>
       ) : (
-        rows.map((bed) => (
-          <section key={bed.key} className={styles.bed} aria-labelledby={`bed-${bed.key}`}>
-            <h2 id={`bed-${bed.key}`} className={styles.bedTitle}>
-              {bed.title}
-              {bed.date ? <span className={styles.bedDate}>{longDay(bed.date)}</span> : null}
-            </h2>
-            {bed.plants.length === 0 ? (
-              <p className={styles.plot}>
-                <span aria-hidden className={styles.bud} />This month’s bouquet is still growing.
-              </p>
-            ) : null}
-            <ul className={styles.plants}>
-              {bed.plants.map(({ b, day }) => (
-                <li key={b.id}>
-                  <Link href={`/b/${b.id}`} className={styles.plant}>
-                    {/* a small server-drawn picture; private to the garden, so not worth next/image */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`/b/${b.id}/thumb`} alt="" width={180} height={258} loading="lazy" />
-                    <span className={styles.caption}>
-                      <b>{b.fromName ? `From ${b.fromName}` : b.kind === "card" ? "A card" : "A bouquet"}</b>
-                      <span>
-                        {shortDay(day)}
-                        {b.lockHash ? " · locked" : ""}
-                        {b.photo ? " · with a photo" : ""}
-                      </span>
+        // one grid of every bouquet, each labelled with its month, oldest first (the story in order)
+        <ul className={styles.plants} aria-label="Every bouquet in our garden">
+          {[...rows].reverse().flatMap((bed) =>
+            bed.plants.length === 0
+              ? [
+                  <li key={bed.key} className={styles.waiting}>
+                    <span className={styles.plotCard}>
+                      <span aria-hidden className={styles.bud} />
+                      Still growing
                     </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))
+                    <span className={styles.caption}>
+                      <b>{bed.title}</b>
+                      {bed.date ? <span>{cardDay(bed.date)}</span> : null}
+                    </span>
+                  </li>,
+                ]
+              : bed.plants.map(({ b, day }) => (
+                  <li key={b.id}>
+                    <Link href={`/b/${b.id}`} className={styles.plant}>
+                      {/* a small server-drawn picture; private to the garden, so not worth next/image */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`/b/${b.id}/thumb`} alt="" width={180} height={258} loading="lazy" />
+                      <span className={styles.caption}>
+                        <b>{bed.title}</b>
+                        <span>
+                          {bed.date ? cardDay(bed.date) : shortDay(day)}
+                          {b.lockHash ? " · locked" : ""}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                )),
+          )}
+        </ul>
       )}
     </main>
   );

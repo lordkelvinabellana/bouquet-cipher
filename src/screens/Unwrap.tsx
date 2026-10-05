@@ -20,7 +20,6 @@ import { readingSequence, stepPause } from "@/core/reveal/sequence";
 import { cameraMatrix, presentedCamera, sceneGroups } from "@/core/scene/scene";
 import { apply } from "@/core/art/geom";
 import { clock, puzzleOf } from "@/core/puzzle";
-import { flyLetter, type Point } from "@/render/fly";
 import { CSS_EASE, DUR } from "@/anim/motion";
 import { track, useTrackOnce } from "@/lib/track";
 import { exportPng, shareOrDownload } from "@/render/canvas/exportPng";
@@ -59,8 +58,8 @@ export interface UnwrapProps {
   personal?: { nickname: string | null; occasion: string | null; next: { id: string; title: string } | null } | null;
 }
 
-/** Reading pace, a touch quicker than the composer's reveal so longer notes don't drag. */
-const PACE = 0.8;
+/** Reading pace: a brisk typing rhythm, so even a long note doesn't drag. */
+const PACE = 0.6;
 
 /** A signed-in visitor opened it: keep it in their Received gallery, or mark it read. */
 export function useSeen(code: string, viewer: Viewer) {
@@ -99,13 +98,6 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
   }, [phase, result, code]);
   const slots = useMemo(() => puzzleOf(layout, cipher), [layout, cipher]);
   const cardRef = useRef<HTMLDivElement>(null);
-  const letterRef = useRef<HTMLParagraphElement>(null);
-  const focusOf = useMemo(() => new Map(layout.elements.map((e) => [e.key, e.focus])), [layout]);
-  // each reading step's place among the note's letters (spaces aren't drawn as letters)
-  const inkIndex = useMemo(() => {
-    let n = 0;
-    return steps.map((s) => (s.kind === "element" ? n++ : -1));
-  }, [steps]);
 
   // The bouquet steps back to make room for the letter. Rather than animating its size
   // (which redraws the whole picture every frame), it's laid out at the new size at once
@@ -127,17 +119,7 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
     );
   }, [phase, reduced]);
 
-  /** A flower's centre on screen. */
-  const flowerAt = useCallback(
-    (key: string): Point | null => {
-      const f = focusOf.get(key);
-      const box = cardRef.current?.getBoundingClientRect();
-      if (!f || !box) return null;
-      const [x, y] = apply(cameraMatrix(camera), f);
-      return { x: box.left + (x / FRAME.w) * box.width, y: box.top + (y / FRAME.h) * box.height };
-    },
-    [focusOf, camera],
-  );
+
 
   // The flap lifts, the letter slides out, then the writing starts.
   useEffect(() => {
@@ -188,15 +170,9 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
   const glowKey = phase === "puzzle" ? puzzleGlow : current?.kind === "element" ? current.key : null;
   const written = phase === "read" ? steps.map((s) => s.char).join("") : steps.slice(0, read).map((s) => s.char).join("");
 
-  // the letter just read flies from its flower to its place in the note
-  useLayoutEffect(() => {
-    if (phase !== "reading" || reduced || read === 0) return;
-    const step = steps[read - 1];
-    if (step.kind !== "element") return;
-    const target = letterRef.current?.querySelector<HTMLElement>(`[data-i="${inkIndex[read - 1]}"]`);
-    const from = flowerAt(step.key);
-    if (target && from) flyLetter(step.char, from, target);
-  }, [phase, read, reduced, steps, inkIndex, flowerAt]);
+  // the letter just read pops up over its flower while the note types it
+  const chipAt = current?.kind === "element" ? apply(cameraMatrix(camera), [current.focus[0], current.focus[1] - current.r * 0.6]) : null;
+  const chip = chipAt && current ? { left: (chipAt[0] / FRAME.w) * 100, top: (chipAt[1] / FRAME.h) * 100, char: current.char } : null;
 
   const shareScore = async () => {
     if (!result) return;
@@ -270,6 +246,11 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
             className={styles.card}
             label={phase === "read" ? `A bouquet that reads: ${message}` : "A bouquet with a hidden message"}
           />
+          {chip && !reduced ? (
+            <span key={read} className={styles.chip} style={{ left: `${chip.left}%`, top: `${chip.top}%` }} aria-hidden>
+              {chip.char}
+            </span>
+          ) : null}
         </div>
         <div className={styles.side}>
           <section className={styles.intro} aria-live="polite">
@@ -302,7 +283,6 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                 cipher={cipher}
                 toName={toName}
                 reduced={reduced}
-                flowerAt={flowerAt}
                 onFocusFlower={setPuzzleGlow}
                 onSolved={onSolved}
                 onGiveUp={giveUp}
@@ -333,7 +313,7 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
               ) : (
                 <article className={styles.letter} aria-label="The message">
                   {toName ? <p className={styles.dear}>Dear {toName},</p> : null}
-                  <p ref={letterRef} className={styles.note}>
+                  <p className={styles.note}>
                     <Inked text={written} />
                     {phase === "reading" ? <span className={styles.caret} aria-hidden /> : null}
                   </p>

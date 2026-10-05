@@ -175,9 +175,9 @@ test("a bouquet can be planted in an earlier month, and empty months wait for th
   const word = process.env.MONTHSARY_WORD?.trim() || "monthsary";
   const { id } = (await (await request.post("/api/bouquets", { data: { message: "Back then", month: 5 } })).json()) as { id: string };
   await page.goto("/garden");
-  const row = page.getByRole("region", { name: new RegExp(`Our 5th ${word}`, "i") });
-  await expect(row.locator(`a[href="/b/${id}"]`)).toBeVisible();
-  await expect(page.getByText("This month’s bouquet is still growing.").first()).toBeVisible();
+  // its card in the grid carries its month
+  await expect(page.locator(`a[href="/b/${id}"]`)).toContainText(new RegExp(`Our 5th ${word}`, "i"));
+  await expect(page.getByText("Still growing").first()).toBeVisible();
   expect((await request.post("/api/bouquets", { data: { message: "Nope", month: -1 } })).status()).toBe(400);
 });
 
