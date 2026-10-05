@@ -21,8 +21,8 @@ const INTRO = 0.7;
 /** How long one flower takes to pop open. */
 export const POP = 0.42;
 const AFTER_GROW = 0.5;
-/** How long a letter takes to fly from its flower to its place in the message. */
-export const FLY = 0.62;
+/** How long a letter's pop over its flower lasts (the message types it at the same moment). */
+export const LETTER_POP = 0.5;
 /** Reading is sped up so even a full message fits in a short clip. */
 const MAX_READ = 7.5;
 const PACE = 0.8;
@@ -76,7 +76,7 @@ export function planVideo(layout: BouquetLayout, cipher: Cipher | null, reveal: 
       t += stepPause(step) * PACE * k;
     }
     // wait for the last letter to land
-    outro = (reads.length ? reads[reads.length - 1].at + FLY : t) + 0.3;
+    outro = (reads.length ? reads[reads.length - 1].at + LETTER_POP : t) + 0.3;
   }
   const duration = outro + (reveal ? OUTRO_REVEAL : OUTRO_MYSTERY);
   return { camera, duration: Math.ceil(duration * FPS) / FPS, sweep, pops, grown, reads, outro };

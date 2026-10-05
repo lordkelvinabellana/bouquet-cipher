@@ -932,3 +932,38 @@
   font-size: 24px;
   color: #d9709a;
 }
+
+/* the letter just read pops up over its flower (the note types it at the same moment) */
+.chip {
+  position: absolute;
+  z-index: 2;
+  translate: -50% -100%;
+  padding: 0.12em 0.42em 0.06em;
+  border-radius: 999px;
+  background: #fff6da;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.25);
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(22px, 7cqw, 38px);
+  line-height: 1;
+  color: #3a3833;
+  pointer-events: none;
+  animation: pop 560ms var(--ease-out) both;
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  55% {
+    transform: scale(1) translateY(-4px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.96) translateY(-14px);
+  }
+}
