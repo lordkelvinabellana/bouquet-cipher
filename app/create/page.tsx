@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CreatePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const { to, reply } = await searchParams;
+  const { to, reply, from, back } = await searchParams;
   let initialTo = typeof to === "string" ? to.slice(0, 60) : "";
   const user = await currentUser();
   const store = getStore();
@@ -34,6 +34,8 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
   return (
     <Composer
       initialTo={initialTo}
+      initialFrom={typeof from === "string" ? from.slice(0, 60) : ""}
+      forHim={back !== undefined}
       initialKey={newCipherKey()}
       account={me ? { seal: me.seal, name: me.displayName, sealStyle: me.sealStyle } : null}
       replyTo={replyTo}

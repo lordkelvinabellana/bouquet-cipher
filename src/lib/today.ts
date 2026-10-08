@@ -12,6 +12,8 @@ export interface Today {
   word: string;
   /** Who the bouquets are from (FROM_NAME), to sign them by default. */
   from: string | null;
+  /** Where a bouquet made for him can be emailed (REPLY_EMAIL). */
+  replyEmail: string | null;
   greeting: { title: string; line: string } | null;
   note: { from: string | null; text: string } | null;
 }

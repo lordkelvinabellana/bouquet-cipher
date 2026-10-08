@@ -86,6 +86,8 @@ export interface BouquetStore {
   /** Keep a photo (JPEG bytes) under its name, and read it back. */
   savePhoto(name: string, bytes: Uint8Array): Promise<void>;
   photo(name: string): Promise<Uint8Array | null>;
+  /** Which of these photos exist (a quick listing; nothing is downloaded). */
+  photosThatExist(names: readonly string[]): Promise<Set<string>>;
 
   /** Count one event (see lib/events.ts). `dev` marks local and preview traffic. */
   track(e: TrackedEvent, dev: boolean): Promise<void>;
@@ -295,6 +297,17 @@ class SupabaseStore implements BouquetStore {
     if (error) this.fail("keep the photo", error);
   }
 
+  async photosThatExist(names: readonly string[]): Promise<Set<string>> {
+    const found = new Set<string>();
+    await Promise.all(
+      names.map(async (n) => {
+        const { data } = await this.db.storage.from("photos").list("", { search: n, limit: 5 });
+        if (data?.some((f) => f.name === n)) found.add(n);
+      }),
+    );
+    return found;
+  }
+
   async photo(name: string): Promise<Uint8Array | null> {
     const { data, error } = await this.db.storage.from("photos").download(name);
     if (error || !data) return null;
@@ -445,6 +458,11 @@ class DevFileStore implements BouquetStore {
     const dir = path.join(path.dirname(this.file), "photos");
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(path.join(dir, name), bytes);
+  }
+  async photosThatExist(names: readonly string[]): Promise<Set<string>> {
+    const found = new Set<string>();
+    for (const n of names) if (await this.photo(n)) found.add(n);
+    return found;
   }
   async photo(name: string): Promise<Uint8Array | null> {
     try {

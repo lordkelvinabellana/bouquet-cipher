@@ -147,6 +147,21 @@ export default async function GardenPage() {
                   </li>
                 )),
           )}
+          {/* after the last bouquet, one last thing */}
+          <li>
+            <Link href="/finale" className={`${styles.plant} ${styles.finaleCard}`}>
+              <span className={styles.plotCard}>
+                <span aria-hidden className={styles.heartBig}>
+                  ❤
+                </span>
+                One last thing
+              </span>
+              <span className={styles.caption}>
+                <b>For you</b>
+                <span>after all fifty</span>
+              </span>
+            </Link>
+          </li>
         </ul>
       )}
     </main>

@@ -54,8 +54,13 @@ export interface UnwrapProps {
   solve?: boolean;
   /** A photo tucked in with the letter (its address), shown once the flowers are read. */
   photo?: string | null;
-  /** In the private garden: her nickname, which month it's for, and the bouquet after it. */
-  personal?: { nickname: string | null; occasion: string | null; next: { id: string; title: string } | null } | null;
+  /** In the private garden: her nickname, which month it's for, and the bouquets either side. */
+  personal?: {
+    nickname: string | null;
+    occasion: string | null;
+    next: { href: string; title: string } | null;
+    prev: { href: string; title: string } | null;
+  } | null;
 }
 
 /** Reading pace: a brisk typing rhythm, so even a long note doesn't drag. */
@@ -121,12 +126,13 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
 
 
 
+  const inGarden = personal !== null;
   // The flap lifts, the letter slides out, then the writing starts.
   useEffect(() => {
     if (phase !== "opening") return;
-    const t = setTimeout(() => setPhase("reading"), reduced ? 0 : 1500);
+    const t = setTimeout(() => setPhase("reading"), reduced ? 0 : inGarden ? 1000 : 1500);
     return () => clearTimeout(t);
-  }, [phase, reduced]);
+  }, [phase, reduced, inGarden]);
 
   // Each flower glows in turn and its letter joins the note.
   useEffect(() => {
@@ -158,8 +164,29 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
     setPhase("reading");
   };
   const openEnvelope = useCallback(() => setPhase((p) => (p === "envelope" ? "opening" : p)), []);
-  useAutoAdvance(phase === "arrive", reduced ? LINGER.arrive / 2 : LINGER.arrive, unwrap);
-  useAutoAdvance(phase === "envelope", reduced ? LINGER.envelope / 2 : LINGER.envelope, openEnvelope);
+  // in the garden, one bouquet after another: shorter pauses before it opens itself
+  const linger = personal ? { arrive: 1300, envelope: 700 } : LINGER;
+  useAutoAdvance(phase === "arrive", reduced ? linger.arrive / 2 : linger.arrive, unwrap);
+  useAutoAdvance(phase === "envelope", reduced ? linger.envelope / 2 : linger.envelope, openEnvelope);
+
+  // The photo is fetched as soon as the page opens, so it's ready (never a late flash) by the
+  // time it settles onto the bouquet, while the note is still being typed.
+  const [photoReady, setPhotoReady] = useState(false);
+  useEffect(() => {
+    if (!photo) return;
+    let live = true;
+    const img = new Image();
+    img.src = photo;
+    img
+      .decode()
+      .catch(() => {})
+      .then(() => live && setPhotoReady(true));
+    return () => {
+      live = false;
+    };
+  }, [photo]);
+  const photoPhase = phase === "opening" || phase === "reading" || phase === "read";
+  const pinned = photoPhase && (photo ? photoReady : !!personal);
   const readAgain = () => {
     setRead(0);
     setPaused(false);
@@ -218,18 +245,21 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
   const heading = phase === "puzzle" ? "Can you read it?" : fromName ? `${fromName} sent you a bouquet` : "Someone sent you a bouquet";
 
   return (
-    <main className={styles.page} data-phase={phase}>
-      <header className={styles.top}>
-        <Link href="/" className={styles.brand}>
-          Bouquet Cipher
-        </Link>
-        <span className={styles.links}>
-          <Link href="/alphabet" className={styles.link}>
-            How it works
+    <main className={styles.page} data-phase={phase} data-garden={personal ? "" : undefined}>
+      {/* in the garden, the way around lives in the bar at the bottom instead */}
+      {!personal ? (
+        <header className={styles.top}>
+          <Link href="/" className={styles.brand}>
+            Bouquet Cipher
           </Link>
-          <AccountLink />
-        </span>
-      </header>
+          <span className={styles.links}>
+            <Link href="/alphabet" className={styles.link}>
+              How it works
+            </Link>
+            <AccountLink />
+          </span>
+        </header>
+      ) : null}
 
       <div className={styles.workspace}>
         <div ref={cardRef} className={styles.cardBox}>
@@ -250,6 +280,20 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
             <span key={read} className={styles.chip} style={{ left: `${chip.left}%`, top: `${chip.top}%` }} aria-hidden>
               {chip.char}
             </span>
+          ) : null}
+          {/* the photo settles onto the bouquet as the envelope opens, and stays while the note types */}
+          {pinned ? (
+            <figure className={styles.pinned} aria-label={photo ? undefined : "A photo is coming"}>
+              {photo ? (
+                // the sender's own photo, served privately; not worth next/image
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={photo} alt="A photo tucked in with the letter" />
+              ) : (
+                <span className={styles.photoPlaceholder}>
+                  <span aria-hidden>❤</span>a photo of us
+                </span>
+              )}
+            </figure>
           ) : null}
         </div>
         <div className={styles.side}>
@@ -320,21 +364,20 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                   {phase === "read" && fromName ? <p className={styles.signed}>{fromName}</p> : null}
                 </article>
               )}
-              {phase === "read" && photo ? (
-                <figure className={styles.photo}>
-                  {/* the sender's own photo, served privately; not worth next/image */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo} alt="A photo tucked in with the letter" />
-                </figure>
-              ) : phase === "read" && personal ? (
-                // in the private garden, every bouquet has room for a photo; until it's added, a soft stand-in
-                <figure className={styles.photo} aria-label="A photo is coming">
-                  <span className={styles.photoPlaceholder}>
-                    <span aria-hidden>❤</span>a photo of us
-                  </span>
-                </figure>
-              ) : null}
             </div>
+          ) : null}
+          {/* on phones in the garden, the photo sits below the bouquet and the note instead */}
+          {pinned ? (
+            <figure className={styles.photoBelow} aria-label={photo ? undefined : "A photo is coming"}>
+              {photo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={photo} alt="A photo tucked in with the letter" />
+              ) : (
+                <span className={styles.photoPlaceholder}>
+                  <span aria-hidden>❤</span>a photo of us
+                </span>
+              )}
+            </figure>
           ) : null}
           <div className={styles.actions}>
             {phase === "arrive" ? (
@@ -381,8 +424,8 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                   </button>
                 ) : null}
                 {personal?.next ? (
-                  <Link className={styles.primary} href={`/b/${personal.next.id}`}>
-                    Next: {personal.next.title}
+                  <Link className={styles.primary} href={personal.next.href}>
+                    {personal.next.href === "/finale" ? "One last thing →" : `Next: ${personal.next.title}`}
                   </Link>
                 ) : null}
                 <button type="button" className={styles.ghost} onClick={readAgain}>
@@ -406,15 +449,32 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                   revealByDefault
                   buttonClass={styles.ghost}
                 />
-                <ReplyActions code={code} fromName={fromName} viewer={viewer} replyable={replyable} />
-                {personal ? (
-                  <Link className={styles.ghost} href="/garden">
-                    Back to our garden
-                  </Link>
-                ) : null}
+                {/* in the garden, replying happens once, at the very end (the finale) */}
+                {!personal ? <ReplyActions code={code} fromName={fromName} viewer={viewer} replyable={replyable} /> : null}
               </>
             ) : null}
           </div>
+          {personal ? (
+            <nav className={styles.gardenNav} aria-label="Around our garden">
+              {personal.prev ? (
+                <Link href={personal.prev.href} className={styles.navLink} title={personal.prev.title}>
+                  ← <span>{personal.prev.title.replace(/^Our /, "")}</span>
+                </Link>
+              ) : (
+                <span />
+              )}
+              <Link href="/garden" className={styles.navHome}>
+                Our garden
+              </Link>
+              {personal.next ? (
+                <Link href={personal.next.href} className={styles.navLink} title={personal.next.title}>
+                  <span>{personal.next.href === "/finale" ? "One last thing" : personal.next.title.replace(/^Our /, "")}</span> →
+                </Link>
+              ) : (
+                <span />
+              )}
+            </nav>
+          ) : null}
         </div>
       </div>
 

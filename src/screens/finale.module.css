@@ -1,0 +1,244 @@
+.page {
+  min-height: 100dvh;
+  padding: 28px 16px 40px;
+  overflow-x: hidden;
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  max-width: 980px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-weight: 400;
+  font-size: clamp(40px, 8vw, 72px);
+  line-height: 1.02;
+  color: #f7c6d4;
+  text-wrap: balance;
+  animation: rise var(--dur-slow) var(--ease-out) 0.15s both;
+}
+
+/* the bouquet in the middle, photos either side (beneath it on phones) */
+.scene {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 360px) 1fr;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.bouquet {
+  display: block;
+  width: 100%;
+  height: auto;
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.photos {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+}
+
+.left {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.right {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.photo {
+  width: min(170px, 100%);
+  margin: 0;
+  padding: 6px 6px 22px;
+  background: #fffdf7;
+  border-radius: 3px;
+  box-shadow: 0 14px 30px rgb(0 0 0 / 0.34);
+  animation: drop var(--dur-scene) var(--ease-out) both;
+}
+
+.photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+/* what the bouquet spells, once it has grown */
+.spells {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(24px, 5vw, 34px);
+  color: var(--cream);
+  opacity: 0;
+  translate: 0 10px;
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    translate var(--dur-slow) var(--ease-out);
+}
+
+.note {
+  width: min(560px, 100%);
+  padding: 20px 24px 16px;
+  border-radius: 10px;
+  background: repeating-linear-gradient(#fffbf1 0 31px, rgb(165 123 82 / 0.2) 31px 32px) #fffbf1;
+  background-position: 0 16px;
+  color: #3a3833;
+  text-align: left;
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.34);
+  rotate: -0.8deg;
+  opacity: 0;
+  translate: 0 18px;
+  transition:
+    opacity var(--dur-slow) var(--ease-out) 0.35s,
+    translate var(--dur-slow) var(--ease-out) 0.35s;
+}
+
+.noteText {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 24px;
+  line-height: 32px;
+  white-space: pre-line;
+  text-wrap: pretty;
+}
+
+.from {
+  margin: 6px 0 0;
+  text-align: right;
+  font-family: var(--font-hand), cursive;
+  font-size: 24px;
+  color: #5b564c;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out) 0.8s;
+}
+
+.spells[data-on],
+.note[data-on],
+.actions[data-on] {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.primary,
+.ghost {
+  padding: 13px 24px;
+  border-radius: 999px;
+  font-size: 16px;
+  text-decoration: none;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+
+.primary {
+  background: var(--cream);
+  color: var(--ink);
+}
+
+.ghost {
+  border: 1px solid rgb(244 234 215 / 0.5);
+  color: var(--on-slate);
+}
+
+.primary:active,
+.ghost:active {
+  transform: scale(0.97);
+}
+
+.primary:focus-visible,
+.ghost:focus-visible {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 3px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+  }
+}
+
+@keyframes drop {
+  from {
+    opacity: 0;
+    transform: translateY(-36px) scale(1.06);
+  }
+}
+
+/* Phones: the bouquet first, then the photos in a row beneath it. */
+@media (max-width: 700px) {
+  .scene {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .bouquet {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: min(100%, 300px);
+    justify-self: center;
+  }
+
+  .photos {
+    display: contents;
+  }
+
+  .left,
+  .right {
+    grid-row: auto;
+  }
+
+  .photo {
+    grid-row: 2;
+    width: 100%;
+    padding: 4px 4px 14px;
+  }
+
+  .photo:nth-child(n) {
+    grid-row: auto;
+  }
+
+  .noteText,
+  .from {
+    font-size: 20px;
+    line-height: 27px;
+  }
+
+  .note {
+    background: repeating-linear-gradient(#fffbf1 0 26px, rgb(165 123 82 / 0.2) 26px 27px) #fffbf1;
+    background-position: 0 14px;
+    padding: 16px 18px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title,
+  .photo {
+    animation: none;
+  }
+  .spells,
+  .note,
+  .actions {
+    transition: none;
+  }
+}

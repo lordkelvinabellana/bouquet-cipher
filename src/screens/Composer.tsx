@@ -61,9 +61,13 @@ export interface ComposerProps {
   account?: { seal: number; name: string | null; sealStyle: string | null } | null;
   /** Replying to this bouquet: it goes to its sender's inbox. */
   replyTo?: string | null;
+  /** Who it's from, filled in to start with. */
+  initialFrom?: string;
+  /** Her one bouquet back (from the finale): once it's made, how to send it to him. */
+  forHim?: boolean;
 }
 
-export function Composer({ initialTo = "", initialKey, account = null, replyTo = null }: ComposerProps) {
+export function Composer({ initialTo = "", initialKey, account = null, replyTo = null, initialFrom = "", forHim = false }: ComposerProps) {
   const { ref, bind, live, final, count, refusal, reset } = useGardenInput();
   const [phase, setPhase] = useState<Phase>("write");
   useTrackOnce("create_view", { reply: replyTo !== null });
@@ -71,7 +75,7 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
   const [key, setKey] = useState(() => (spentKeys.has(initialKey) ? newCipherKey() : initialKey));
   const [paper, setPaper] = useState(0);
   const [toName, setToName] = useState(initialTo);
-  const [fromName, setFromName] = useState(account?.name ?? "");
+  const [fromName, setFromName] = useState(initialFrom || account?.name || "");
   const [shared, setShared] = useState<{ url: string; code: string; delivered: boolean } | null>(null);
   const [error, setError] = useState("");
   // a photo tucked in with the letter, and a question it waits behind (both optional)
@@ -569,6 +573,29 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
                   />
                 ) : null}
               </div>
+              {forHim ? (
+                <div className={styles.sendGuide}>
+                  <h3 className={styles.stepTitle}>Send it to {toName.trim() || "him"}</h3>
+                  {today?.replyEmail ? (
+                    <a
+                      className={`${styles.wrap} ${styles.next}`}
+                      href={`mailto:${today.replyEmail}?subject=${encodeURIComponent(`A bouquet for you${toName.trim() ? `, ${toName.trim()}` : ""}`)}&body=${encodeURIComponent(`Every flower is a letter. Open it here:\n${shared.url}\n\nOr type the code ${formatCode(shared.code)} at ${new URL(shared.url).origin}/decode`)}`}
+                    >
+                      Email it to {toName.trim() || "him"}
+                    </a>
+                  ) : null}
+                  <ol className={styles.guide}>
+                    {today?.replyEmail ? (
+                      <li>
+                        <b>Email it:</b> tap the button above, then press send.
+                      </li>
+                    ) : null}
+                    <li>
+                      <b>Or send the picture:</b> tap <i>{canShare ? "Share picture" : "Save picture"}</i>, then send it to {toName.trim() || "him"} any way you like. The QR code on its tag opens the bouquet.
+                    </li>
+                  </ol>
+                </div>
+              ) : null}
               <button type="button" className={styles.textButton} onClick={startOver}>
                 Write another
               </button>

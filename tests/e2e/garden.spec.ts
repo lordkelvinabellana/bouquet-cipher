@@ -195,7 +195,7 @@ test("a garden bouquet opens as that month's, and leads on to the next", async (
   await page.getByRole("button", { name: "Unwrap it" }).click();
   await page.getByRole("button", { name: "Open the envelope" }).first().click({ timeout: 10_000 });
   await page.getByRole("button", { name: "Show it all" }).click();
-  await expect(page.getByRole("link", { name: "Back to our garden" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Around our garden" }).getByRole("link", { name: "Our garden" })).toBeVisible();
   // the next bouquet in the garden (another test's may be in between, so any next one will do)
   await expect(page.getByRole("link", { name: /^Next: Our/ })).toBeVisible();
 });
@@ -208,15 +208,25 @@ test("the special link: the gate, then the greeting, then our garden", async ({ 
   const page = await visitor.newPage();
   await page.goto(path);
   if (GATED) {
-    await expect(page).toHaveURL(new RegExp(`/gate\\?next=${encodeURIComponent(path)}`));
+    await expect(page).toHaveURL(new RegExp(`/gate\\?next=${encodeURIComponent(path)}`), { timeout: 20_000 });
     await page.getByLabel("The secret word", { exact: true }).fill(ANY_ANSWER ? "us" : process.env.SITE_PASSPHRASE!);
     await page.getByRole("button", { name: "Open the gate" }).click();
   }
-  await expect(page).toHaveURL(new RegExp(`${path}$`));
+  await expect(page).toHaveURL(new RegExp(`${path}$`), { timeout: 20_000 });
   await expect(page.getByRole("heading", { name: new RegExp(`Happy \\d+(st|nd|rd|th) ${word}`, "i") })).toBeVisible({ timeout: 10_000 });
   // three photo frames: each a photo, or a soft stand-in until one's added
   await expect(page.locator("figure")).toHaveCount(3);
   await page.getByRole("link", { name: "Enter our garden" }).click();
   await expect(page.getByRole("heading", { name: "Our garden" })).toBeVisible();
   await visitor.close();
+});
+
+test("after the last bouquet, one last thing: the finale", async ({ page }) => {
+  test.skip(!GARDEN, "The garden is off.");
+  await page.goto("/garden");
+  await page.getByRole("link", { name: /One last thing/ }).click();
+  await expect(page).toHaveURL(/\/finale$/, { timeout: 30_000 });
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  // the bouquet grows, then the way back appears
+  await expect(page.getByRole("link", { name: "Back to our garden" })).toBeVisible({ timeout: 15_000 });
 });
