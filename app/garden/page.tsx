@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { dayIn, daysBetween, isMonthsary, monthsaryOf, monthsBetween, parseDay, yearsAndMonths, type Day } from "@/core/together";
 import { FLAGS } from "@/lib/flags";
+import { OPENED_COOKIE, parseOpened } from "@/lib/opened";
+import { GardenGrid, type GardenItem } from "@/screens/GardenGrid";
 import { isDevTraffic } from "@/server/analytics";
 import { monthTitle, PERSONAL, today as todayInGarden } from "@/server/personal";
 import { getStore, type StoredBouquet } from "@/server/store";
@@ -115,54 +118,14 @@ export default async function GardenPage() {
         </section>
       ) : (
         // one grid of every bouquet, each labelled with its month, oldest first (the story in order)
-        <ul className={styles.plants} aria-label="Every bouquet in our garden">
-          {[...rows].reverse().flatMap((bed) =>
+        <GardenGrid
+          opened={[...parseOpened((await cookies()).get(OPENED_COOKIE)?.value)]}
+          items={[...rows].reverse().flatMap((bed): GardenItem[] =>
             bed.plants.length === 0
-              ? [
-                  <li key={bed.key} className={styles.waiting}>
-                    <span className={styles.plotCard}>
-                      <span aria-hidden className={styles.bud} />
-                      Still growing
-                    </span>
-                    <span className={styles.caption}>
-                      <b>{bed.title}</b>
-                      {bed.date ? <span>{cardDay(bed.date)}</span> : null}
-                    </span>
-                  </li>,
-                ]
-              : bed.plants.map(({ b, day }) => (
-                  <li key={b.id}>
-                    <Link href={`/b/${b.id}`} className={styles.plant}>
-                      {/* a small server-drawn picture; private to the garden, so not worth next/image */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/b/${b.id}/thumb`} alt="" width={180} height={258} loading="lazy" />
-                      <span className={styles.caption}>
-                        <b>{bed.title}</b>
-                        <span>
-                          {bed.date ? cardDay(bed.date) : shortDay(day)}
-                          {b.lockHash ? " · locked" : ""}
-                        </span>
-                      </span>
-                    </Link>
-                  </li>
-                )),
+              ? [{ kind: "waiting", key: bed.key, title: bed.title, date: bed.date ? cardDay(bed.date) : null }]
+              : bed.plants.map(({ b, day }) => ({ kind: "plant", id: b.id, title: bed.title, date: bed.date ? cardDay(bed.date) : shortDay(day), locked: !!b.lockHash })),
           )}
-          {/* after the last bouquet, one last thing */}
-          <li>
-            <Link href="/finale" className={`${styles.plant} ${styles.finaleCard}`}>
-              <span className={styles.plotCard}>
-                <span aria-hidden className={styles.heartBig}>
-                  ❤
-                </span>
-                One last thing
-              </span>
-              <span className={styles.caption}>
-                <b>For you</b>
-                <span>after all fifty</span>
-              </span>
-            </Link>
-          </li>
-        </ul>
+        />
       )}
     </main>
   );

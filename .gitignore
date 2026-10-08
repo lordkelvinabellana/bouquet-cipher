@@ -48,3 +48,7 @@ npm-debug.log*
 /skills-lock.json
 /.codex/
 /.playwright/
+
+# the garden songs, uploaded to private storage (never committed)
+/songs/
+/.songs-clean/

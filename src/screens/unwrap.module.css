@@ -1175,3 +1175,10 @@
     animation: none !important;
   }
 }
+
+/* on a phone, room above the month's title for the music control in the corner */
+@media (max-width: 640px) {
+  :global(html[data-music]) .page[data-garden] {
+    padding-top: 52px;
+  }
+}

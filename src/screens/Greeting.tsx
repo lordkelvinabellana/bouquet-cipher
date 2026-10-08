@@ -17,13 +17,17 @@ export function Greeting({
   line,
   note,
   photos,
+  from,
 }: {
   title: string;
   line: string;
   note: { from: string | null; text: string } | null;
   /** Each frame's photo, or null for a stand-in. */
   photos: (string | null)[];
+  /** Who made the garden, for the note before she goes in. */
+  from: string | null;
 }) {
+  const [notice, setNotice] = useState(false);
   const [hurry, setHurry] = useState(false);
   const beat = (s: number) => ({ animationDelay: hurry ? "0s" : `${s}s` }) as React.CSSProperties;
 
@@ -68,10 +72,34 @@ export function Greeting({
           </article>
         ) : null}
 
-        <Link href="/garden" className={`${styles.enter} ${styles.in}`} style={beat(note ? BEATS.enter : BEATS.note)}>
+        <button
+          type="button"
+          className={`${styles.enter} ${styles.in}`}
+          style={beat(note ? BEATS.enter : BEATS.note)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setNotice(true);
+          }}
+        >
           Enter our garden
-        </Link>
+        </button>
       </section>
+
+      {/* before she goes in: what the garden is, and that it was made for her */}
+      {notice ? (
+        <div className={styles.backdrop} role="dialog" aria-modal="true" aria-labelledby="notice-title" onClick={(e) => e.stopPropagation()}>
+          <article className={styles.notice}>
+            <h2 id="notice-title" className={styles.noticeTitle}>
+              Before you go in…
+            </h2>
+            <p>{from ?? "I"} made every bouquet in this garden by hand, just for you: one for each of our fifty months.</p>
+            <p>Each one hides a message in its flowers. Every flower is a letter. Tap a bouquet, and it will read itself to you.</p>
+            <Link href="/garden" className={styles.noticeGo} autoFocus>
+              Take me in
+            </Link>
+          </article>
+        </div>
+      ) : null}
     </main>
   );
 }

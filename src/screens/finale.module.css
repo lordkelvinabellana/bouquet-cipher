@@ -242,3 +242,10 @@
     transition: none;
   }
 }
+
+/* on a phone, room at the top for the music control in the corner */
+@media (max-width: 640px) {
+  :global(html[data-music]) .page {
+    padding-top: 56px;
+  }
+}

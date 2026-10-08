@@ -1,5 +1,6 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { GATE_STATE } from "./gate";
 
 // The private garden's features, when they're switched on in .env.local.
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
@@ -181,6 +182,51 @@ test("a bouquet can be planted in an earlier month, and empty months wait for th
   expect((await request.post("/api/bouquets", { data: { message: "Nope", month: -1 } })).status()).toBe(400);
 });
 
+test("the garden's music starts from her tap on the first bouquet, and keeps playing", async ({ browser, request }) => {
+  test.skip(!GARDEN, "The garden is off.");
+  const songs = (await (await request.get("/api/music")).json()) as { title: string }[];
+  test.skip(!songs.length, "No songs uploaded.");
+  const make = async (message: string) => ((await (await request.post("/api/bouquets", { data: { message, month: 7 } })).json()) as { id: string }).id;
+  const first = await make("Music one");
+  const second = await make("Music two");
+  // a visitor who never switched the music off
+  const { cookies } = JSON.parse(readFileSync(GATE_STATE, "utf8")) as { cookies: [] };
+  const ctx = await browser.newContext({ storageState: { cookies, origins: [] } });
+  const page = await ctx.newPage();
+  await page.goto(`/b/${first}`);
+  const unwrap = page.getByRole("button", { name: "Unwrap it ♪" });
+  await expect(unwrap).toBeVisible({ timeout: 15_000 });
+  // it waits for her, rather than opening itself
+  await page.waitForTimeout(2500);
+  await expect(unwrap).toBeVisible();
+  await unwrap.click();
+  const music = page.getByRole("group", { name: "Music" });
+  await expect(music.getByRole("button", { name: new RegExp(songs[0].title.replace(/[()]/g, "\\$&")) })).toBeVisible();
+  // on to another bouquet (without reloading): the song carries on, and it opens itself
+  await page.getByRole("navigation", { name: "Around our garden" }).getByRole("link", { name: "Our garden" }).click();
+  await expect(page.getByRole("heading", { name: "Our garden" })).toBeVisible();
+  await expect(music).toBeVisible();
+  await page.locator(`a[href="/b/${second}"]`).click();
+  await expect(page.getByRole("navigation", { name: "Around our garden" })).toBeVisible({ timeout: 15_000 });
+  await expect(music).toBeVisible();
+  await ctx.close();
+});
+
+test("bouquets not yet opened are greyed out, and turn to colour once opened", async ({ page, request }) => {
+  test.skip(!GARDEN, "The garden is off.");
+  const { id } = (await (await request.post("/api/bouquets", { data: { message: "Open me", fromName: "Garden test" } })).json()) as { id: string };
+  await page.goto("/garden?fresh");
+  const card = page.locator("li", { has: page.locator(`a[href="/b/${id}"]`) });
+  await expect(card).toHaveAttribute("data-state", /^(next|later)$/);
+  // the first unopened one is marked as the place to start
+  await expect(page.getByText("Start here")).toBeVisible();
+  await page.goto(`/b/${id}`);
+  await page.getByRole("button", { name: /^Unwrap it/ }).click();
+  await expect(page.getByRole("navigation", { name: "Around our garden" })).toBeVisible({ timeout: 10_000 });
+  await page.goto("/garden");
+  await expect(card).toHaveAttribute("data-state", "opened");
+});
+
 test("a garden bouquet opens as that month's, and leads on to the next", async ({ page, request }) => {
   test.skip(!GARDEN || !process.env.TOGETHER_SINCE, "The garden or its date is off.");
   const word = process.env.MONTHSARY_WORD?.trim() || "monthsary";
@@ -216,7 +262,12 @@ test("the special link: the gate, then the greeting, then our garden", async ({ 
   await expect(page.getByRole("heading", { name: new RegExp(`Happy \\d+(st|nd|rd|th) ${word}`, "i") })).toBeVisible({ timeout: 10_000 });
   // three photo frames: each a photo, or a soft stand-in until one's added
   await expect(page.locator("figure")).toHaveCount(3);
-  await page.getByRole("link", { name: "Enter our garden" }).click();
+  // a word before going in: it was all made for her (tap again if the page wasn't ready yet)
+  await expect(async () => {
+    await page.getByRole("button", { name: "Enter our garden" }).click();
+    await expect(page.getByRole("dialog")).toContainText("made every bouquet in this garden by hand", { timeout: 2_000 });
+  }).toPass({ timeout: 20_000 });
+  await page.getByRole("link", { name: "Take me in" }).click();
   await expect(page.getByRole("heading", { name: "Our garden" })).toBeVisible();
   await visitor.close();
 });
