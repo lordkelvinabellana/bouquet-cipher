@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { FLAGS } from "@/lib/flags";
 import { Greeting } from "@/screens/Greeting";
-import { latestGreeting } from "@/server/personal";
+import { latestGreeting, PERSONAL } from "@/server/personal";
 import { getStore } from "@/server/store";
 
 export const dynamic = "force-dynamic";
@@ -20,5 +20,5 @@ export default async function GreetingPage() {
   const names = Array.from({ length: FRAMES }, (_, i) => `greeting-${i + 1}.jpg`);
   const exist = await getStore().photosThatExist(names);
   const photos = names.map((n, i) => (exist.has(n) ? `/greeting/photo/${i + 1}` : null));
-  return <Greeting title={g.title} line={g.line} note={g.note} photos={photos} />;
+  return <Greeting title={g.title} line={g.line} note={g.note} photos={photos} from={PERSONAL.from} />;
 }

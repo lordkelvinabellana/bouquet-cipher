@@ -141,6 +141,9 @@
 }
 
 .enter {
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
   margin-top: 6px;
   padding: 14px 30px;
   border-radius: 999px;
@@ -328,5 +331,77 @@
     padding: 14px 20px 12px;
     background: repeating-linear-gradient(#fffbf1 0 26px, rgb(165 123 82 / 0.2) 26px 27px) #fffbf1;
     background-position: 0 13px;
+  }
+}
+
+/* the note before the garden: what it is, and that it was made for her */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(38 50 56 / 0.78);
+  animation: fadeIn var(--dur-base) var(--ease-out) both;
+}
+
+.notice {
+  width: min(400px, 100%);
+  padding: 24px 24px 20px;
+  border-radius: 14px;
+  background: #fffbf1;
+  color: #3a3833;
+  text-align: center;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.4);
+  animation: rise var(--dur-slow) var(--ease-out) both;
+}
+
+.noticeTitle {
+  margin: 0 0 10px;
+  font-family: var(--font-hand), cursive;
+  font-weight: 400;
+  font-size: 32px;
+  color: #8a3b52;
+}
+
+.notice p {
+  margin: 0 0 10px;
+  font-size: 16px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.noticeGo {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 13px 30px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--cream);
+  font-size: 16px;
+  text-decoration: none;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+
+.noticeGo:active {
+  transform: scale(0.97);
+}
+
+.noticeGo:focus-visible {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 3px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .notice {
+    animation: none;
   }
 }

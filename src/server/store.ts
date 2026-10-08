@@ -10,6 +10,25 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { TrackedEvent } from "@/lib/events";
 import { newBouquetId, type BouquetKind, type NewBouquet } from "./validate";
 
+export interface Song {
+  title: string;
+  src: string;
+}
+
+/** "01 - Our Song -- The Band.mp3" → "Our Song · The Band": the number keeps the order. */
+export function songTitle(file: string): string {
+  return (
+    file
+      .replace(/\.[a-z0-9]+$/i, "")
+      .replace(/^\d+\s*[-_.)]?\s*/, "")
+      .replace(/_/g, " ")
+      .replace(/\s*--\s*/g, " · ")
+      .trim() || file
+  );
+}
+
+const SONG = /\.(mp3|m4a|aac|mp4|ogg|wav)$/i;
+
 export interface StoredBouquet {
   id: string;
   /** A bouquet of flowers, or a simple card. */
@@ -88,6 +107,8 @@ export interface BouquetStore {
   photo(name: string): Promise<Uint8Array | null>;
   /** Which of these photos exist (a quick listing; nothing is downloaded). */
   photosThatExist(names: readonly string[]): Promise<Set<string>>;
+  /** The garden's songs, in order, each with a short-lived private address. */
+  songs(): Promise<Song[]>;
 
   /** Count one event (see lib/events.ts). `dev` marks local and preview traffic. */
   track(e: TrackedEvent, dev: boolean): Promise<void>;
@@ -309,6 +330,15 @@ class SupabaseStore implements BouquetStore {
     return found;
   }
 
+  async songs(): Promise<Song[]> {
+    const { data } = await this.db.storage.from("music").list("", { limit: 50, sortBy: { column: "name", order: "asc" } });
+    const files = (data ?? []).map((f) => f.name).filter((n) => SONG.test(n)).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    if (!files.length) return [];
+    // played straight from storage (it can seek, which phones need); the addresses last a day
+    const { data: signed } = await this.db.storage.from("music").createSignedUrls(files, 60 * 60 * 24);
+    return (signed ?? []).flatMap((s, i) => (s.signedUrl ? [{ title: songTitle(files[i]), src: s.signedUrl }] : []));
+  }
+
   async photo(name: string): Promise<Uint8Array | null> {
     const { data, error } = await this.db.storage.from("photos").download(name);
     if (error || !data) return null;
@@ -464,6 +494,10 @@ class DevFileStore implements BouquetStore {
     const found = new Set<string>();
     for (const n of names) if (await this.photo(n)) found.add(n);
     return found;
+  }
+  // no songs without Supabase
+  async songs(): Promise<Song[]> {
+    return [];
   }
   async photo(name: string): Promise<Uint8Array | null> {
     try {

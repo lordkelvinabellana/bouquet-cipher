@@ -3,6 +3,8 @@ import { request, type FullConfig } from "@playwright/test";
 
 /** The gate's cookie, shared by every test (the site may be a private garden). */
 export const GATE_STATE = ".playwright/gate.json";
+/** The localStorage key that says the music was switched off (lib/music.ts). */
+export const MUSIC_OFF = "bc-music-off";
 
 /** Open the private garden's gate once, if it has one, and keep the cookie for the tests. */
 export default async function openGate(config: FullConfig) {
@@ -14,7 +16,10 @@ export default async function openGate(config: FullConfig) {
     const res = await ctx.post("/api/gate", { data: { passphrase: process.env.SITE_PASSPHRASE || "the tests" } });
     if (!res.ok()) throw new Error(`Couldn't open the gate for the tests (${res.status()}).`);
   }
-  await ctx.storageState({ path: GATE_STATE });
+  const state = await ctx.storageState();
   await ctx.dispose();
-  if (!existsSync(GATE_STATE)) writeFileSync(GATE_STATE, JSON.stringify({ cookies: [], origins: [] }));
+  // the garden's music off, so bouquets open themselves without waiting for a tap
+  // (garden.spec.ts tries the music on its own)
+  const origin = new URL(baseURL).origin;
+  writeFileSync(GATE_STATE, JSON.stringify({ ...state, origins: [{ origin, localStorage: [{ name: MUSIC_OFF, value: "1" }] }] }));
 }

@@ -10,7 +10,9 @@
  *   read       the whole message, signed, with ways to reply
  */
 import Link from "next/link";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { loadMusic, musicState, mutedBefore, serverMusicState, startMusic, subscribeMusic } from "@/lib/music";
+import { markOpened } from "@/lib/opened";
 import { useReducedMotion } from "motion/react";
 import { FRAME, sealShapes } from "@/core/art/scenery";
 import { parseSealStyle } from "@/core/art/seal";
@@ -166,8 +168,28 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
   const openEnvelope = useCallback(() => setPhase((p) => (p === "envelope" ? "opening" : p)), []);
   // in the garden, one bouquet after another: shorter pauses before it opens itself
   const linger = personal ? { arrive: 1300, envelope: 700 } : LINGER;
-  useAutoAdvance(phase === "arrive", reduced ? linger.arrive / 2 : linger.arrive, unwrap);
+  // The garden's music starts from her tap on "Unwrap it" (phones won't start sound any
+  // other way), so the first bouquet she opens waits for it; after that they open themselves.
+  const music = useSyncExternalStore(subscribeMusic, musicState, serverMusicState);
+  useEffect(() => {
+    if (inGarden) loadMusic();
+  }, [inGarden]);
+  // (unless the music was switched off here before)
+  const waitForTap = inGarden && !music.started && music.songs?.length !== 0 && !(music.songs && mutedBefore());
+  const tapToUnwrap = useCallback(() => {
+    if (inGarden) startMusic();
+    unwrap();
+  }, [inGarden, unwrap]);
+  const tapToOpen = useCallback(() => {
+    if (inGarden) startMusic();
+    openEnvelope();
+  }, [inGarden, openEnvelope]);
+  useAutoAdvance(phase === "arrive" && !waitForTap, reduced ? linger.arrive / 2 : linger.arrive, unwrap);
   useAutoAdvance(phase === "envelope", reduced ? linger.envelope / 2 : linger.envelope, openEnvelope);
+  // the garden greys out the bouquets she hasn't opened yet
+  useEffect(() => {
+    if (inGarden && phase !== "arrive") markOpened(code);
+  }, [inGarden, phase, code]);
 
   // The photo is fetched as soon as the page opens, so it's ready (never a late flash) by the
   // time it settles onto the bouquet, while the note is still being typed.
@@ -339,7 +361,7 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                   type="button"
                   className={styles.envelope}
                   data-open={phase === "opening" ? "" : undefined}
-                  onClick={openEnvelope}
+                  onClick={tapToOpen}
                   aria-label="Open the envelope"
                 >
                   <span className={styles.envBack} aria-hidden />
@@ -381,12 +403,12 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
           ) : null}
           <div className={styles.actions}>
             {phase === "arrive" ? (
-              <button type="button" className={styles.primary} onClick={unwrap}>
-                Unwrap it
+              <button type="button" className={styles.primary} onClick={tapToUnwrap}>
+                {waitForTap && music.songs?.length ? "Unwrap it ♪" : "Unwrap it"}
               </button>
             ) : null}
             {phase === "envelope" ? (
-              <button type="button" className={styles.primary} onClick={openEnvelope}>
+              <button type="button" className={styles.primary} onClick={tapToOpen}>
                 Open the envelope
               </button>
             ) : null}
