@@ -252,3 +252,16 @@
   display: grid;
   gap: 8px;
 }
+
+.finaleCard .plotCard {
+  border: 1px solid rgb(247 198 212 / 0.55);
+  background: linear-gradient(160deg, rgb(247 198 212 / 0.16), rgb(227 211 234 / 0.1));
+  color: #f7c6d4;
+  font-family: var(--font-hand), cursive;
+  font-size: 20px;
+}
+
+.heartBig {
+  font-size: 28px;
+  color: #d9709a;
+}

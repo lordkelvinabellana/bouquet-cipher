@@ -1,5 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
+import { existsSync } from "node:fs";
 import { GATE_STATE } from "./gate";
+
+if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
 const MESSAGE = "Happy birthday Mom! Love you always.";
 
@@ -136,7 +139,9 @@ test("a bouquet can be written, wrapped, sent and read back elsewhere", async ({
   await expect(r.getByText(`The flowers say: ${MESSAGE}`)).toBeAttached();
   await expect(r.getByLabel("The message")).toContainText(MESSAGE);
   await expect(r.getByLabel("The message")).toContainText("Kel");
-  await expect(r.getByRole("link", { name: "Send one back" })).toHaveAttribute("href", "/create?to=Kel");
+  // in the private garden, replying happens once, from the finale; elsewhere, under every bouquet
+  if (/^(1|on|true|yes)$/i.test(process.env.NEXT_PUBLIC_FEATURE_GARDEN?.trim() ?? "")) await expect(r.getByRole("link", { name: "Send one back" })).toHaveCount(0);
+  else await expect(r.getByRole("link", { name: "Send one back" })).toHaveAttribute("href", "/create?to=Kel");
   await recipient.close();
 });
 

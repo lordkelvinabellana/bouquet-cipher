@@ -56,15 +56,20 @@ export default async function BouquetPage({ params, searchParams }: Props) {
   let personal = null;
   if (FLAGS.garden) {
     const month = b.garden ? monthOf(b) : null;
-    let next: { id: string; title: string } | null = null;
+    let next: { href: string; title: string } | null = null;
+    let prev: { href: string; title: string } | null = null;
     if (month !== null) {
       const all = (await getStore().garden(isDevTraffic()))
         .map((x) => ({ id: x.id, month: monthOf(x) ?? 0, at: x.createdAt }))
         .sort((x, y) => x.month - y.month || x.at.localeCompare(y.at));
-      const later = all[all.findIndex((x) => x.id === b.id) + 1];
-      if (later) next = { id: later.id, title: monthTitle(later.month) };
+      const i = all.findIndex((x) => x.id === b.id);
+      const later = all[i + 1];
+      const earlier = i > 0 ? all[i - 1] : null;
+      // after the last bouquet comes the finale
+      next = later ? { href: `/b/${later.id}`, title: monthTitle(later.month) } : { href: "/finale", title: "One last thing" };
+      if (earlier) prev = { href: `/b/${earlier.id}`, title: monthTitle(earlier.month) };
     }
-    personal = { nickname: nickname(), occasion: month !== null ? monthTitle(month) : null, next };
+    personal = { nickname: nickname(), occasion: month !== null ? monthTitle(month) : null, next, prev };
   }
   const user = await currentUser();
   const viewer = { signedIn: user !== null, own: user !== null && b.senderId === user.id };

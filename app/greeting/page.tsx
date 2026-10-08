@@ -17,9 +17,8 @@ export default async function GreetingPage() {
   const g = latestGreeting();
   if (!g) redirect("/garden");
   // only the photos that exist; the rest show a soft stand-in (a missing image never flashes broken)
-  const store = getStore();
-  const photos = await Promise.all(
-    Array.from({ length: FRAMES }, async (_, i) => ((await store.photo(`greeting-${i + 1}.jpg`)) ? `/greeting/photo/${i + 1}` : null)),
-  );
+  const names = Array.from({ length: FRAMES }, (_, i) => `greeting-${i + 1}.jpg`);
+  const exist = await getStore().photosThatExist(names);
+  const photos = names.map((n, i) => (exist.has(n) ? `/greeting/photo/${i + 1}` : null));
   return <Greeting title={g.title} line={g.line} note={g.note} photos={photos} />;
 }

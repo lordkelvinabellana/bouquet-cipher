@@ -967,3 +967,211 @@
     transform: scale(0.96) translateY(-14px);
   }
 }
+
+/* the garden: the photo pinned to the bouquet's corner while the note types */
+.pinned {
+  position: absolute;
+  z-index: 3;
+  top: 4%;
+  right: -4%;
+  width: 40%;
+  margin: 0;
+  padding: 5px 5px 18px;
+  background: #fffdf7;
+  border-radius: 3px;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.35);
+  rotate: 6deg;
+  pointer-events: none;
+  animation: pinIn var(--dur-slow) var(--ease-out) both;
+}
+
+.pinned img {
+  display: block;
+}
+
+.pinned img,
+.pinned .photoPlaceholder {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.pinned .photoPlaceholder {
+  font-size: clamp(11px, 3.4cqw, 16px);
+}
+
+@keyframes pinIn {
+  from {
+    opacity: 0;
+    translate: 24px -18px;
+    scale: 0.88;
+    rotate: 14deg;
+  }
+}
+
+/* the garden: back, home and on, in a bar fixed to the bottom of the screen */
+.gardenNav {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  margin: 0 auto;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  max-width: 560px;
+  background: var(--slate);
+  box-shadow: 0 -14px 18px -4px var(--slate);
+  border-top: 1px solid rgb(244 234 215 / 0.12);
+  font-size: 14px;
+}
+
+/* room at the bottom, so the bar never covers the last button */
+.page[data-garden] {
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+}
+
+.navLink {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--on-slate-muted);
+  text-decoration: none;
+  transition: color var(--dur-press) var(--ease-out);
+}
+
+.navLink:last-child {
+  text-align: right;
+}
+
+.navHome {
+  padding: 8px 14px;
+  border: 1px solid rgb(244 234 215 / 0.35);
+  border-radius: 999px;
+  color: var(--on-slate);
+  text-decoration: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .navLink:hover {
+    color: var(--cream);
+  }
+}
+
+.navLink:focus-visible,
+.navHome:focus-visible {
+  outline: 3px solid rgb(233 142 114 / 0.8);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pinned {
+    animation: none;
+  }
+}
+
+/* the garden's phone-only photo (below the bouquet and the note) */
+.photoBelow {
+  display: none;
+}
+
+/* Phones, in the garden: once it's open, the bouquet and the note side by side, the
+   photo beneath them, so it all fits on one screen. */
+@media (max-width: 859px) {
+  .page[data-garden]:not([data-phase="arrive"]):not([data-phase="unwrapping"]):not([data-phase="puzzle"]) .workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-areas:
+      "intro intro"
+      "card letter"
+      "photo photo"
+      "actions actions";
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 10px;
+  }
+
+  .page[data-garden] .intro {
+    grid-area: intro;
+  }
+
+  .page[data-garden] .letterArea {
+    grid-area: letter;
+  }
+
+  .page[data-garden] .actions {
+    grid-area: actions;
+  }
+
+
+  .page[data-garden]:not([data-phase="arrive"]):not([data-phase="unwrapping"]):not([data-phase="puzzle"]) .cardBox {
+    grid-area: card;
+    width: 100%;
+  }
+
+  /* the pinned photo gives way to the one below */
+  .page[data-garden] .pinned {
+    display: none;
+  }
+
+  .page[data-garden] .photoBelow {
+    grid-area: photo;
+    justify-self: center;
+    display: block;
+    width: min(36%, 150px);
+    margin: 2px 0 0;
+    padding: 5px 5px 18px;
+    background: #fffdf7;
+    border-radius: 3px;
+    box-shadow: 0 12px 26px rgb(0 0 0 / 0.32);
+    rotate: 3deg;
+    animation: pinIn var(--dur-slow) var(--ease-out) both;
+  }
+
+  .page[data-garden] .photoBelow img {
+    display: block;
+  }
+
+  .page[data-garden] .photoBelow img,
+  .page[data-garden] .photoBelow .photoPlaceholder {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 2px;
+  }
+
+  /* a narrower note: smaller writing, the same lined paper */
+  .page[data-garden] .letter {
+    width: 100%;
+    min-height: 0;
+    padding: 10px 12px 10px;
+    background: repeating-linear-gradient(#fffbf1 0 23px, rgb(165 123 82 / 0.22) 23px 24px) #fffbf1;
+    background-position: 0 8px;
+    transform: rotate(-1deg);
+  }
+
+  .page[data-garden] .letter .dear,
+  .page[data-garden] .letter .note,
+  .page[data-garden] .letter .signed {
+    font-size: 17px;
+    line-height: 24px;
+  }
+
+  .page[data-garden] .letter .note {
+    min-height: 48px;
+  }
+
+  .page[data-garden] .envelope {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photoBelow {
+    animation: none !important;
+  }
+}

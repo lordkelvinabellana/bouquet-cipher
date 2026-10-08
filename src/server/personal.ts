@@ -6,6 +6,7 @@ import { dayIn, isMonthsary, monthsBetween, ordinal, parseDay, yearsAndMonths } 
  *   FOR_NAME         her name ("April")
  *   NICKNAMES        her nicknames, separated by | ("Mah Lervle|Poruper|Poruper-sang")
  *   FROM_NAME        who it's from, to sign the note ("Kel")
+ *   REPLY_EMAIL      where she can email the bouquet she makes for him, from the finale
  *   GATE_HINT        an optional hint shown under the secret word
  *   GATE_ANY_ANSWER  on: any answer opens the gate (a playful gate, see lib/gate.ts)
  *   TOGETHER_SINCE   the day you got together (YYYY-MM-DD), for "months together"
@@ -13,6 +14,9 @@ import { dayIn, isMonthsary, monthsBetween, ordinal, parseDay, yearsAndMonths } 
  *   MONTHSARY_LINE   the line under the monthsary greeting (optional)
  *   MONTHSARY_NOTE   a note shown the first time she arrives on a monthsary (optional)
  *   TIME_ZONE        whose calendar the days are counted in (default Asia/Manila)
+ *   FINALE_TITLE     the finale's heading (after the last bouquet)
+ *   FINALE_BOUQUET   what the finale's big bouquet spells (at most 80 characters)
+ *   FINALE_NOTE      the finale's letter
  *   CELEBRATE_MONTH  a fixed Monthsarudle to celebrate (e.g. 50), instead of counting from today
  *   PREVIEW_TODAY    development only: pretend it's this day (YYYY-MM-DD)
  */
@@ -26,12 +30,18 @@ export const PERSONAL = {
   name: process.env.FOR_NAME?.trim() || null,
   nicknames: list(process.env.NICKNAMES),
   from: process.env.FROM_NAME?.trim() || null,
+  replyEmail: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(process.env.REPLY_EMAIL?.trim() ?? "") ? process.env.REPLY_EMAIL!.trim() : null,
   hint: process.env.GATE_HINT?.trim() || null,
   word: process.env.MONTHSARY_WORD?.trim() || "monthsary",
   /** A fixed Monthsarudle, so every number on the site agrees whatever the date. */
   fixedMonth: /^\d{1,4}$/.test(process.env.CELEBRATE_MONTH?.trim() ?? "") ? Number(process.env.CELEBRATE_MONTH!.trim()) : null,
   line: process.env.MONTHSARY_LINE?.trim() || null,
   note: process.env.MONTHSARY_NOTE?.trim() || null,
+  finale: {
+    title: process.env.FINALE_TITLE?.trim() || "One last thing",
+    bouquet: process.env.FINALE_BOUQUET?.trim() || "I love you",
+    note: process.env.FINALE_NOTE?.trim() || null,
+  },
   timeZone: process.env.TIME_ZONE?.trim() || "Asia/Manila",
   since: /^\d{4}-\d{2}-\d{2}$/.test(process.env.TOGETHER_SINCE?.trim() ?? "") ? process.env.TOGETHER_SINCE!.trim() : null,
 };
@@ -77,6 +87,8 @@ export interface Today {
   word: string;
   /** Who the bouquets are from (FROM_NAME), to sign them by default. */
   from: string | null;
+  /** Where a bouquet made for him can be emailed (REPLY_EMAIL). */
+  replyEmail: string | null;
   greeting: { title: string; line: string } | null;
   note: { from: string | null; text: string } | null;
 }
@@ -98,6 +110,7 @@ export function today(at = new Date()): Today {
     since: PERSONAL.since,
     word: PERSONAL.word,
     from: PERSONAL.from,
+    replyEmail: PERSONAL.replyEmail,
     greeting:
       monthsary && months
         ? {
