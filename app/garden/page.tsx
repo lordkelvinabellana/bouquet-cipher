@@ -53,7 +53,8 @@ export default async function GardenPage() {
   const since = PERSONAL.since ? parseDay(PERSONAL.since) : null;
   const t = todayInGarden();
   const today = parseDay(t.day)!;
-  const months = since ? monthsBetween(since, today) : null;
+  // a fixed Monthsarudle (CELEBRATE_MONTH) if one's set, so every number agrees
+  const months = t.months ?? (since ? monthsBetween(since, today) : null);
   const monthsary = since ? isMonthsary(since, today) : false;
   // the live site shows only real bouquets; local runs and previews, only their own
   const list = await getStore().garden(isDevTraffic());
@@ -101,7 +102,7 @@ export default async function GardenPage() {
           </p>
         ) : null}
         <p className={styles.lede}>
-          A bouquet for every {PERSONAL.word}, each with a message hidden in its flowers. {list.length ? `${list.length} so far.` : ""}
+          A bouquet for every {PERSONAL.word}, each with a message hidden in its flowers.
         </p>
       </section>
 
