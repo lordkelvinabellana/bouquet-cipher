@@ -13,6 +13,7 @@ import { dayIn, isMonthsary, monthsBetween, ordinal, parseDay, yearsAndMonths } 
  *   MONTHSARY_LINE   the line under the monthsary greeting (optional)
  *   MONTHSARY_NOTE   a note shown the first time she arrives on a monthsary (optional)
  *   TIME_ZONE        whose calendar the days are counted in (default Asia/Manila)
+ *   CELEBRATE_MONTH  a fixed Monthsarudle to celebrate (e.g. 50), instead of counting from today
  *   PREVIEW_TODAY    development only: pretend it's this day (YYYY-MM-DD)
  */
 const list = (s: string | undefined) =>
@@ -27,6 +28,8 @@ export const PERSONAL = {
   from: process.env.FROM_NAME?.trim() || null,
   hint: process.env.GATE_HINT?.trim() || null,
   word: process.env.MONTHSARY_WORD?.trim() || "monthsary",
+  /** A fixed Monthsarudle, so every number on the site agrees whatever the date. */
+  fixedMonth: /^\d{1,4}$/.test(process.env.CELEBRATE_MONTH?.trim() ?? "") ? Number(process.env.CELEBRATE_MONTH!.trim()) : null,
   line: process.env.MONTHSARY_LINE?.trim() || null,
   note: process.env.MONTHSARY_NOTE?.trim() || null,
   timeZone: process.env.TIME_ZONE?.trim() || "Asia/Manila",
@@ -84,7 +87,7 @@ export function today(at = new Date()): Today {
   const preview = process.env.NODE_ENV !== "production" ? parseDay(process.env.PREVIEW_TODAY?.trim() ?? "") : null;
   const day = preview ?? dayIn(PERSONAL.timeZone, at);
   const since = PERSONAL.since ? parseDay(PERSONAL.since) : null;
-  const months = since ? monthsBetween(since, day) : null;
+  const months = PERSONAL.fixedMonth ?? (since ? monthsBetween(since, day) : null);
   const monthsary = !!since && isMonthsary(since, day);
   const n = nickname();
   return {

@@ -214,8 +214,8 @@ test("the special link: the gate, then the greeting, then our garden", async ({ 
   }
   await expect(page).toHaveURL(new RegExp(`${path}$`));
   await expect(page.getByRole("heading", { name: new RegExp(`Happy \\d+(st|nd|rd|th) ${word}`, "i") })).toBeVisible({ timeout: 10_000 });
-  // photos not added yet show a soft stand-in
-  await expect(page.getByText("a photo of us").first()).toBeVisible();
+  // three photo frames: each a photo, or a soft stand-in until one's added
+  await expect(page.locator("figure")).toHaveCount(3);
   await page.getByRole("link", { name: "Enter our garden" }).click();
   await expect(page.getByRole("heading", { name: "Our garden" })).toBeVisible();
   await visitor.close();
