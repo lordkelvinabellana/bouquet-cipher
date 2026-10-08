@@ -390,7 +390,7 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
                 Open the envelope
               </button>
             ) : null}
-            {(phase === "arrive" || phase === "envelope") && !wantPuzzle ? (
+            {(phase === "arrive" || phase === "envelope") && !wantPuzzle && !personal ? (
               <button type="button" className={styles.ghost} onClick={startPuzzle}>
                 Decode it yourself
               </button>
@@ -454,7 +454,8 @@ export function Unwrap({ code, message, salt, paper, cipherKey, senderSeal, seal
               </>
             ) : null}
           </div>
-          {personal ? (
+          {/* the bar waits until the bouquet is open, so it never covers "Unwrap it" */}
+          {personal && !wrapped ? (
             <nav className={styles.gardenNav} aria-label="Around our garden">
               {personal.prev ? (
                 <Link href={personal.prev.href} className={styles.navLink} title={personal.prev.title}>
