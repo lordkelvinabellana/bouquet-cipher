@@ -90,8 +90,14 @@ test("reading it out, each letter pops up over its flower as the note types it",
 test("decode it yourself: guess letters until the note is filled", async ({ page, request }) => {
   const res = await request.post("/api/bouquets", { data: { message: "Hi Sam!", fromName: "Alex" } });
   const { id } = (await res.json()) as { id: string };
-  await page.goto(`/b/${id}`);
-  await page.getByRole("button", { name: "Decode it yourself" }).click();
+  // (in the private garden, the button is hidden: a ?solve link opens the puzzle instead)
+  if (/^(1|on|true|yes)$/i.test(process.env.NEXT_PUBLIC_FEATURE_GARDEN?.trim() ?? "")) {
+    await page.goto(`/b/${id}?solve`);
+    await page.getByRole("button", { name: "Unwrap it" }).click();
+  } else {
+    await page.goto(`/b/${id}`);
+    await page.getByRole("button", { name: "Decode it yourself" }).click();
+  }
   await expect(page.getByRole("heading", { name: "Can you read it?" })).toBeVisible({ timeout: 10_000 });
   // punctuation is given; letters start hidden, with their clues
   await expect(page.getByLabel("The message, still hidden")).toContainText("!");

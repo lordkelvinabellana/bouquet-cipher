@@ -286,10 +286,11 @@ class SupabaseStore implements BouquetStore {
       .select("*")
       .eq("garden", true)
       .eq("test", test)
-      .order("created_at", { ascending: true })
+      // the newest thousand (the page arranges them by month), oldest first
+      .order("created_at", { ascending: false })
       .limit(1000);
     if (error) this.fail("load the garden", error);
-    return (data as Row[]).map(fromRow);
+    return (data as Row[]).map(fromRow).reverse();
   }
 
   async savePhoto(name: string, bytes: Uint8Array): Promise<void> {
