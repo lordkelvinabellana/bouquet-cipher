@@ -84,9 +84,10 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
   const [locked, setLocked] = useState(false);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
-  // the garden (only past its gate): which month this letter is for (null: this month, -1: not planted)
+  // the garden (only past its gate): which month this letter is for (null: this month, -1: not
+  // planted, the default, so bouquets for anyone else stay out of it)
   const today = useToday(FLAGS.garden);
-  const [month, setMonth] = useState<number | null>(null);
+  const [month, setMonth] = useState<number | null>(-1);
   const since = today?.since ? parseDay(today.since) : null;
   // the private garden signs every bouquet with your name for each other, unless you change it
   const signed = useRef(false);
