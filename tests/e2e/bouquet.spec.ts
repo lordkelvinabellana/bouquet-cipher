@@ -90,14 +90,8 @@ test("reading it out, each letter pops up over its flower as the note types it",
 test("decode it yourself: guess letters until the note is filled", async ({ page, request }) => {
   const res = await request.post("/api/bouquets", { data: { message: "Hi Sam!", fromName: "Alex" } });
   const { id } = (await res.json()) as { id: string };
-  // (in the private garden, the button is hidden: a ?solve link opens the puzzle instead)
-  if (/^(1|on|true|yes)$/i.test(process.env.NEXT_PUBLIC_FEATURE_GARDEN?.trim() ?? "")) {
-    await page.goto(`/b/${id}?solve`);
-    await page.getByRole("button", { name: "Unwrap it" }).click();
-  } else {
-    await page.goto(`/b/${id}`);
-    await page.getByRole("button", { name: "Decode it yourself" }).click();
-  }
+  await page.goto(`/b/${id}`);
+  await page.getByRole("button", { name: "Decode it yourself" }).click();
   await expect(page.getByRole("heading", { name: "Can you read it?" })).toBeVisible({ timeout: 10_000 });
   // punctuation is given; letters start hidden, with their clues
   await expect(page.getByLabel("The message, still hidden")).toContainText("!");
@@ -145,9 +139,7 @@ test("a bouquet can be written, wrapped, sent and read back elsewhere", async ({
   await expect(r.getByText(`The flowers say: ${MESSAGE}`)).toBeAttached();
   await expect(r.getByLabel("The message")).toContainText(MESSAGE);
   await expect(r.getByLabel("The message")).toContainText("Kel");
-  // in the private garden, replying happens once, from the finale; elsewhere, under every bouquet
-  if (/^(1|on|true|yes)$/i.test(process.env.NEXT_PUBLIC_FEATURE_GARDEN?.trim() ?? "")) await expect(r.getByRole("link", { name: "Send one back" })).toHaveCount(0);
-  else await expect(r.getByRole("link", { name: "Send one back" })).toHaveAttribute("href", "/create?to=Kel");
+  await expect(r.getByRole("link", { name: "Send one back" })).toHaveAttribute("href", "/create?to=Kel");
   await recipient.close();
 });
 

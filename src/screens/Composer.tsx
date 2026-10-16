@@ -84,7 +84,7 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
   const [locked, setLocked] = useState(false);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
-  // the garden: which month this letter is for (null: this month)
+  // the garden (only past its gate): which month this letter is for (null: this month, -1: not planted)
   const today = useToday(FLAGS.garden);
   const [month, setMonth] = useState<number | null>(null);
   const since = today?.since ? parseDay(today.since) : null;
@@ -201,7 +201,9 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
           replyTo,
           photo: photoName,
           lock: locked ? { question, answer } : null,
-          month,
+          // her reply to you, or one you keep out, isn't planted in the garden
+          garden: today !== null && !forHim && month !== -1,
+          month: month === -1 ? null : month,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as { id?: string; error?: string; delivered?: boolean };
@@ -435,12 +437,13 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
                           </option>
                         );
                       })}
+                      <option value={-1}>Not in our garden</option>
                     </select>
                   </label>
                 </div>
               ) : null}
 
-              {FLAGS.photos ? (
+              {FLAGS.photos && today ? (
                 <div className={`${styles.step} ${styles.photoStep}`}>
                   <div>
                     <h3 className={styles.stepTitle}>Tuck in a photo</h3>
@@ -474,7 +477,7 @@ export function Composer({ initialTo = "", initialKey, account = null, replyTo =
                 </div>
               ) : null}
 
-              {FLAGS.locks ? (
+              {FLAGS.locks && today ? (
                 <div className={styles.step}>
                   <label className={styles.lockToggle}>
                     <input type="checkbox" checked={locked} onChange={(e) => setLocked(e.target.checked)} disabled={phase === "saving"} />

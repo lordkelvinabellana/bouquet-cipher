@@ -31,7 +31,7 @@ export interface NewBouquet {
   photo?: string | null;
   /** A secret question it waits behind, and the answer (hashed by the server before saving). */
   lock?: { question: string; answer: string } | null;
-  /** Planted in "Our garden" (set by the server). */
+  /** Planted in "Our garden" (asked for by the composer; the server decides). */
   garden?: boolean;
   /** Which month of the garden it's planted in (0 is the first month), if not the current one. */
   month?: number | null;
@@ -102,7 +102,7 @@ export function validateNewBouquet(body: unknown): Validated {
   }
   const month = b.month === undefined || b.month === null ? null : b.month;
   if (month !== null && (typeof month !== "number" || !Number.isInteger(month) || month < 0 || month > 1200)) return { ok: false, error: "Invalid month." };
-  return { ok: true, value: { kind, message, salt, paper, cipherKey, seal, toName: to.value, fromName: from.value, replyTo, photo, lock, month } };
+  return { ok: true, value: { kind, message, salt, paper, cipherKey, seal, toName: to.value, fromName: from.value, replyTo, photo, lock, month, garden: b.garden === true } };
 }
 
 export { ID_PATTERN };

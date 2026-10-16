@@ -2,7 +2,7 @@ import { after, NextResponse, type NextRequest } from "next/server";
 import { currentUser } from "@/lib/supabase/server";
 import { isBot } from "@/lib/events";
 import { FLAGS } from "@/lib/flags";
-import { hashAnswer, normalizeAnswer } from "@/lib/gate";
+import { GATE_COOKIE, hashAnswer, isGateOpen, normalizeAnswer } from "@/lib/gate";
 import { isDevTraffic, recordEvent } from "@/server/analytics";
 import { getStore, type Addressing } from "@/server/store";
 import { warmLinkPreview } from "@/server/warm";
@@ -41,14 +41,16 @@ export async function POST(req: NextRequest) {
       const me = await store.profile(user.id);
       if (me) value = { ...value, seal: me.seal, sealStyle: me.sealStyle, fromName: value.fromName ?? me.displayName };
     }
-    // Private-garden extras, each only when it's switched on.
+    // Private-garden extras: only from past its gate, each only when it's switched on.
+    const ours = FLAGS.garden && (await isGateOpen(req.cookies.get(GATE_COOKIE)?.value));
+    const planted = ours && value.garden === true;
     value = {
       ...value,
-      garden: FLAGS.garden,
-      month: FLAGS.garden ? value.month : null,
+      garden: planted,
+      month: planted ? value.month : null,
       test: isDevTraffic(),
-      photo: FLAGS.photos ? value.photo : null,
-      lock: FLAGS.locks ? value.lock : null,
+      photo: ours && FLAGS.photos ? value.photo : null,
+      lock: ours && FLAGS.locks ? value.lock : null,
     };
     if (value.lock) {
       if (!normalizeAnswer(value.lock.answer)) return NextResponse.json({ error: "The answer needs a letter or a number in it." }, { status: 400 });

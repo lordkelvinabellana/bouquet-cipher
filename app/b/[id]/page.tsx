@@ -36,9 +36,9 @@ export default async function BouquetPage({ params, searchParams }: Props) {
   const solve = (await searchParams)?.solve !== undefined;
   const b = await loadBouquet(id);
   if (!b) notFound();
-  // the private garden: the gate in place of the bouquet (its preview tags above stay)
+  // a bouquet from the private garden: the gate in place of it (its preview tags above stay)
   const jar = await cookies();
-  if (!(await isGateOpen(jar.get(GATE_COOKIE)?.value))) return <Gate endpoint="/api/gate" next={`/b/${b.id}`} {...gateCopy()} />;
+  if (b.garden && !(await isGateOpen(jar.get(GATE_COOKIE)?.value))) return <Gate endpoint="/api/gate" next={`/b/${b.id}`} {...gateCopy()} />;
   // a bouquet waiting behind a question: closed buds until it's answered
   if (b.lockHash && b.lockQuestion && !(await isUnlocked(b.id, jar.get(unlockCookie(b.id))?.value))) {
     return (
@@ -54,8 +54,8 @@ export default async function BouquetPage({ params, searchParams }: Props) {
   }
   // in the private garden: greet her, name the month, and lead on to the next bouquet
   let personal = null;
-  if (FLAGS.garden) {
-    const month = b.garden ? monthOf(b) : null;
+  if (FLAGS.garden && b.garden) {
+    const month = monthOf(b);
     let next: { href: string; title: string } | null = null;
     let prev: { href: string; title: string } | null = null;
     if (month !== null) {
