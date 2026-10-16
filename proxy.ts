@@ -14,18 +14,18 @@ import { authEnabled, SUPABASE_PUBLIC_KEY, SUPABASE_URL } from "@/lib/supabase/e
 const ACCOUNT_PAGES = /^\/(login|reset|bouquets|auth)(\/|$)/;
 
 /**
- * Open to everyone even when the garden is private: the gate itself, counting, and the
- * link-preview pictures chat apps fetch. Bouquet pages decide for themselves, so they can
- * keep their preview tags while showing the gate in place of the flowers.
+ * The private garden's own pages, behind the gate (the special link too); the rest is the
+ * public app. Bouquet pages decide for themselves: only the garden's ask for the secret word,
+ * and they keep their preview tags while showing the gate in place of the flowers.
  */
-const OUTSIDE_THE_GATE = /^\/(gate|api\/gate|api\/events|api\/me|opengraph-image|b\/[0-9A-Z]{10}(\/opengraph-image)?|robots\.txt|manifest\.webmanifest|icon|apple-icon)(\/|$|\?)/;
+const BEHIND_THE_GATE = /^\/(greeting|garden|finale|api\/(today|music|photos)|b\/[0-9A-Z]{10}\/(photo|thumb))(\/|$)/;
 
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   if ((!FLAGS.accounts && ACCOUNT_PAGES.test(path)) || (!FLAGS.stats && path.startsWith("/stats"))) {
     return NextResponse.redirect(new URL("/", request.url));
   }
-  if (gateEnabled() && !OUTSIDE_THE_GATE.test(path) && !(await isGateOpen(request.cookies.get(GATE_COOKIE)?.value))) {
+  if (gateEnabled() && (BEHIND_THE_GATE.test(path) || path === specialPath()) && !(await isGateOpen(request.cookies.get(GATE_COOKIE)?.value))) {
     if (path.startsWith("/api/")) return NextResponse.json({ error: "This garden is private." }, { status: 401 });
     const gate = new URL("/gate", request.url);
     gate.searchParams.set("next", path + request.nextUrl.search);

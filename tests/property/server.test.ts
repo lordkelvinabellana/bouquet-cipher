@@ -25,6 +25,7 @@ describe("validateNewBouquet", () => {
         photo: null,
         lock: null,
         month: null,
+        garden: false,
       },
     });
   });

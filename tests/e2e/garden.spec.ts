@@ -35,9 +35,12 @@ test.describe("the gate", () => {
   test.skip(!GATED, "SITE_PASSPHRASE isn't set.");
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test("asks for the secret word, once", async ({ page }) => {
+  test("asks for the secret word, once, for the garden only", async ({ page }) => {
+    // the public app needs no word
     await page.goto("/create");
-    await expect(page).toHaveURL(/\/gate\?next=%2Fcreate/);
+    await expect(page).toHaveURL(/\/create$/);
+    await page.goto("/garden");
+    await expect(page).toHaveURL(/\/gate\?next=%2Fgarden/);
     const word = page.getByLabel("The secret word", { exact: true });
     const open = page.getByRole("button", { name: "Open the gate" });
     // nothing at all never opens it
@@ -56,21 +59,23 @@ test.describe("the gate", () => {
       await word.fill(`  ${process.env.SITE_PASSPHRASE!.toUpperCase()} `);
       await open.click();
     }
-    await expect(page).toHaveURL(/\/create$/);
-    await page.goto("/");
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/garden$/);
+    await page.goto("/finale");
+    await expect(page).toHaveURL(/\/finale$/);
   });
 
-  test("keeps the API shut until the gate is open", async ({ request }) => {
-    const shut = await request.post("/api/bouquets", { data: { message: "Private" } });
-    expect(shut.status()).toBe(401);
+  test("keeps the garden's API shut until the gate is open", async ({ request }) => {
+    expect((await request.get("/api/today")).status()).toBe(401);
+    expect((await request.get("/api/music")).status()).toBe(401);
+    // anyone can still make a bouquet, but it isn't planted in the garden
+    expect((await request.post("/api/bouquets", { data: { message: "Hello", garden: true } })).status()).toBe(201);
   });
 });
 
 test("a bouquet link outside the gate shows the gate, with its preview intact", async ({ browser, request }, testInfo) => {
   test.skip(!GATED, "SITE_PASSPHRASE isn't set.");
   // made from inside the garden (the tests' shared state has the gate open)...
-  const { id } = (await (await request.post("/api/bouquets", { data: { message: "Only for you" } })).json()) as { id: string };
+  const { id } = (await (await request.post("/api/bouquets", { data: { message: "Only for you", garden: true } })).json()) as { id: string };
   // ...and opened by someone who hasn't said the secret word
   const outside = await browser.newContext({ baseURL: testInfo.project.use.baseURL, storageState: { cookies: [], origins: [] } });
   const html = await (await outside.request.get(`/b/${id}`, { headers: { "user-agent": "facebookexternalhit/1.1" } })).text();
@@ -160,21 +165,21 @@ test("the composer can tuck in a photo and lock it with a question", async ({ pa
   await expect(page.getByText("Our song?")).toBeVisible();
 });
 
-test("every bouquet is planted in our garden", async ({ page, request }) => {
+test("a bouquet planted in our garden grows there; others stay out", async ({ page, request }) => {
   test.skip(!GARDEN, "The garden is off.");
-  const { id } = (await (await request.post("/api/bouquets", { data: { message: "For the garden", fromName: "Garden test" } })).json()) as { id: string };
+  const { id } = (await (await request.post("/api/bouquets", { data: { message: "For the garden", fromName: "Garden test", garden: true } })).json()) as { id: string };
+  const { id: elsewhere } = (await (await request.post("/api/bouquets", { data: { message: "For someone else" } })).json()) as { id: string };
   await page.goto("/garden");
   await expect(page.getByRole("heading", { name: "Our garden" })).toBeVisible();
   if (process.env.TOGETHER_SINCE) await expect(page.getByText(/(days?|months?) together/)).toBeVisible();
   await expect(page.locator(`a[href="/b/${id}"]`)).toBeVisible();
-  await page.goto("/");
-  await expect(page.getByRole("link", { name: "Our garden" })).toBeVisible();
+  await expect(page.locator(`a[href="/b/${elsewhere}"]`)).toHaveCount(0);
 });
 
 test("a bouquet can be planted in an earlier month, and empty months wait for theirs", async ({ page, request }) => {
   test.skip(!GARDEN || !process.env.TOGETHER_SINCE, "The garden or its date is off.");
   const word = process.env.MONTHSARY_WORD?.trim() || "monthsary";
-  const { id } = (await (await request.post("/api/bouquets", { data: { message: "Back then", month: 5 } })).json()) as { id: string };
+  const { id } = (await (await request.post("/api/bouquets", { data: { message: "Back then", month: 5, garden: true } })).json()) as { id: string };
   await page.goto("/garden");
   // its card in the grid carries its month
   await expect(page.locator(`a[href="/b/${id}"]`)).toContainText(new RegExp(`Our 5th ${word}`, "i"));
@@ -186,7 +191,7 @@ test("the garden's music starts from her tap on the first bouquet, and keeps pla
   test.skip(!GARDEN, "The garden is off.");
   const songs = (await (await request.get("/api/music")).json()) as { title: string }[];
   test.skip(!songs.length, "No songs uploaded.");
-  const make = async (message: string) => ((await (await request.post("/api/bouquets", { data: { message, month: 7 } })).json()) as { id: string }).id;
+  const make = async (message: string) => ((await (await request.post("/api/bouquets", { data: { message, month: 7, garden: true } })).json()) as { id: string }).id;
   const first = await make("Music one");
   const second = await make("Music two");
   // a visitor who never switched the music off
@@ -214,7 +219,7 @@ test("the garden's music starts from her tap on the first bouquet, and keeps pla
 
 test("bouquets not yet opened are greyed out, and turn to colour once opened", async ({ page, request }) => {
   test.skip(!GARDEN, "The garden is off.");
-  const { id } = (await (await request.post("/api/bouquets", { data: { message: "Open me", fromName: "Garden test" } })).json()) as { id: string };
+  const { id } = (await (await request.post("/api/bouquets", { data: { message: "Open me", fromName: "Garden test", garden: true } })).json()) as { id: string };
   await page.goto("/garden?fresh");
   const card = page.locator("li", { has: page.locator(`a[href="/b/${id}"]`) });
   await expect(card).toHaveAttribute("data-state", /^(next|later)$/);
@@ -231,7 +236,7 @@ test("a garden bouquet opens as that month's, and leads on to the next", async (
   test.skip(!GARDEN || !process.env.TOGETHER_SINCE, "The garden or its date is off.");
   const word = process.env.MONTHSARY_WORD?.trim() || "monthsary";
   const make = async (month: number) =>
-    ((await (await request.post("/api/bouquets", { data: { message: `Month ${month}`, fromName: "Kel", month } })).json()) as { id: string }).id;
+    ((await (await request.post("/api/bouquets", { data: { message: `Month ${month}`, fromName: "Kel", month, garden: true } })).json()) as { id: string }).id;
   const first = await make(3);
   await make(4);
   await page.goto(`/b/${first}`);
